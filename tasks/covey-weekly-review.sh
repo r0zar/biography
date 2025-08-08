@@ -315,6 +315,7 @@ Based on all our analysis, generate 2-3 follow-up questions for each relevant to
 
 **REQUIREMENTS:**
 - Questions should be yes/no format for future notification responses
+- For "this or that" questions with two specific options, use custom button format: "Question text? [Yes=Option1|No=Option2]"
 - Focus on areas identified as needing improvement in our analysis
 - Use the topic-manager.sh utility to properly add questions
 - Format: Use $SCRIPTS_DIR/utils/topic-manager.sh add-question "Topic Name" "question text"
@@ -327,7 +328,7 @@ Based on all our analysis, generate 2-3 follow-up questions for each relevant to
 **EXAMPLE COMMANDS TO EXECUTE:**
 - $SCRIPTS_DIR/utils/topic-manager.sh add-question "Career Transition" "Have you identified the specific obstacle preventing daily job applications?"
 - $SCRIPTS_DIR/utils/topic-manager.sh add-question "Personal Effectiveness" "Does your current morning routine support your 6:30 AM wake-up goal?"
-- $SCRIPTS_DIR/utils/topic-manager.sh add-question "Interview Performance" "Have you practiced the specific anxiety management technique that works best for you?"
+- $SCRIPTS_DIR/utils/topic-manager.sh add-question "Interview Performance" "Is your interview anxiety worse during prep time or during actual interviews? [Yes=Prep-Anxiety|No=Interview-Anxiety]"
 
 **FOCUS AREAS FROM ANALYSIS:**
 - Job search consistency (17% completion rate needs investigation)
@@ -336,14 +337,32 @@ Based on all our analysis, generate 2-3 follow-up questions for each relevant to
 - Daily planning effectiveness (what derails the schedule?)
 - Support system utilization (how to better use girlfriend's support?)
 
-Generate the specific add-question commands and execute them using topic-manager.sh.
+**OUTPUT THE ACTUAL COMMANDS TO EXECUTE:**
+
+After your analysis, output the specific commands exactly as they should be executed, one per line:
+
+$SCRIPTS_DIR/utils/topic-manager.sh add-question "Topic Name" "Question text?"
+$SCRIPTS_DIR/utils/topic-manager.sh add-question "Topic Name" "Question text?"
+(etc.)
+
+**IMPORTANT:** Do not just describe what you would add - output the actual executable commands that will add the questions to the topic files.
 EOF
 
-    # Continue with topic question generation
-    "$SCRIPTS_DIR/utils/claude-wrapper.sh" --continue < /tmp/topic_questions_prompt.txt
+    # Continue with topic question generation and capture output
+    CLAUDE_TOPIC_OUTPUT="/tmp/claude_topic_output_$(date +%s).txt"
+    "$SCRIPTS_DIR/utils/claude-wrapper.sh" --continue < /tmp/topic_questions_prompt.txt > "$CLAUDE_TOPIC_OUTPUT"
     
-    # Clean up temp file
+    # Extract and execute topic-manager commands from Claude output
+    if [ -f "$CLAUDE_TOPIC_OUTPUT" ] && [ -s "$CLAUDE_TOPIC_OUTPUT" ]; then
+        log "Extracting and executing topic-manager commands"
+        "$SCRIPTS_DIR/utils/command-extractor.sh" "$CLAUDE_TOPIC_OUTPUT"
+    else
+        log "No Claude output captured for command extraction"
+    fi
+    
+    # Clean up temp files
     rm -f /tmp/topic_questions_prompt.txt
+    rm -f "$CLAUDE_TOPIC_OUTPUT"
     
     log "All follow-up activities completed successfully"
 fi
