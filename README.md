@@ -73,7 +73,7 @@ biography/
 
 ```bash
 # Clone and setup in one command
-cd $HOME && git clone [repository-url] biography && cd biography && ./setup/install.sh
+cd $HOME && git clone git@github.com:r0zar/biography.git biography && cd biography && ./setup/install.sh
 ```
 
 ### Prerequisites
@@ -88,7 +88,7 @@ cd $HOME && git clone [repository-url] biography && cd biography && ./setup/inst
 ```bash
 # 1. Clone repository to home directory
 cd $HOME
-git clone [repository-url] biography
+git clone git@github.com:r0zar/biography.git biography
 cd biography
 
 # 2. Make scripts executable
