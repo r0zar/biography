@@ -70,7 +70,7 @@ The system uses centralized configuration via environment variables:
 ```bash
 # Default paths (can be overridden)
 export VAULT_DIR="$HOME/Documents/Obsidian Vault"
-export SCRIPTS_DIR="/home/rozar/scripts" 
+export SCRIPTS_DIR="/home/rozar/biography" 
 export LOGS_DIR="/home/rozar/logs"
 export CLAUDE_PATH="claude"
 ```
@@ -83,19 +83,19 @@ Add to crontab (`crontab -e`):
 
 ```bash
 # Biography questions every 30 minutes
-*/30 * * * * /home/rozar/scripts/tasks/biography-questions.sh
+*/30 * * * * /home/rozar/biography/tasks/biography-questions.sh
 
 # Daily morning ADHD task refresh
-0 7 * * * /home/rozar/scripts/tasks/adhd-task-prioritizer.sh
+0 7 * * * /home/rozar/biography/tasks/adhd-task-prioritizer.sh
 
 # Daily summary generation (weekdays at 5:30 PM)
-30 17 * * 1-5 /home/rozar/scripts/tasks/daily-summary-wrapper.sh
+30 17 * * 1-5 /home/rozar/biography/tasks/daily-summary-wrapper.sh
 
 # Monthly comprehensive Covey analysis (1st of month at 6 PM)
-0 18 1 * * /home/rozar/scripts/tasks/covey-analysis-simple.sh
+0 18 1 * * /home/rozar/biography/tasks/covey-analysis-simple.sh
 
 # Weekly Covey progress review (Sundays at 6 PM, except 1st of month)
-0 18 * * 0 /home/rozar/scripts/tasks/covey-weekly-review.sh
+0 18 * * 0 /home/rozar/biography/tasks/covey-weekly-review.sh
 ```
 
 ## Usage
