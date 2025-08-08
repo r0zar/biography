@@ -29,7 +29,7 @@ A comprehensive personal development and biography collection system that uses A
 ## Directory Structure
 
 ```
-scripts/
+biography/
 ├── tasks/                     # Cron job scripts
 │   ├── biography-questions.sh      # Generates and asks biography questions
 │   ├── covey-analysis-simple.sh    # Monthly comprehensive Covey analysis
