@@ -49,8 +49,8 @@ biography/
 │   ├── claude-wrapper.sh           # Claude AI integration wrapper
 │   ├── topic-manager.sh            # Claude-powered topic routing & consolidation
 │   ├── generate-questions.sh       # Intelligent question generation
-│   ├── progress-notification.py    # Progress tracking notifications
-│   ├── progress-questioner.sh      # Progress question presenter
+│   ├── quick-question.sh           # Simple question presenter with topic integration
+│   ├── pre-review-questioner.sh    # Pre-review question processor
 │   ├── extract-qa-data.py          # Q&A data parsing utilities
 │   ├── extract-new-topics.sh       # Topic extraction from analysis
 │   ├── daily-summary.py            # Daily summary generation
@@ -228,8 +228,11 @@ If you prefer direct script interaction:
 ./utils/topic-manager.sh consolidate "Topic Name"
 ./utils/topic-manager.sh create "New Topic"
 
-# Ask progress questions
-./utils/progress-questioner.sh
+# Ask quick questions from piped input
+echo "Your question here?" | ./utils/quick-question.sh
+
+# Process pre-review questions from Claude output
+./utils/pre-review-questioner.sh /path/to/claude-output.txt
 ```
 
 ### Topic Management System
@@ -259,6 +262,29 @@ The Claude-powered topic manager provides intelligent organization:
 - **Smart Consolidation**: Merges redundant questions into comprehensive insights
 - **Analytics**: Completion rates, activity tracking, relationship mapping
 
+### Quick Question System
+
+The system provides flexible question presentation and automatic biography integration:
+
+```bash
+# Ask any question with automatic topic routing and answer saving
+echo "What's your biggest obstacle to daily job applications?" | ./utils/quick-question.sh
+
+# Multiple questions can be piped in sequence
+echo "Morning routine obstacle?" | ./utils/quick-question.sh
+echo "Time management challenge?" | ./utils/quick-question.sh
+
+# Process questions from Claude analysis output
+./utils/pre-review-questioner.sh /path/to/analysis-output.txt
+```
+
+**Quick Question Features:**
+- **Automatic Topic Routing**: Questions are intelligently routed to appropriate topic files
+- **Answer Persistence**: All responses saved to biography system with timestamps
+- **Flexible Input**: Supports piped input or command-line arguments
+- **Claude Integration**: Uses Claude wrapper for optimal presentation method
+- **Cross-Platform Dialogs**: Supports notify-send, zenity, and other dialog systems
+
 ### 🔄 Claude-Enhanced Workflows
 
 **Data Integration Workflows:**
@@ -269,16 +295,24 @@ The Claude-powered topic manager provides intelligent organization:
 
 **Maintenance Workflows:**
 - **System Optimization**: *"Review my topic files and suggest consolidations or reorganizations"*
-- **Question Generation**: *"Generate 5 targeted questions based on my biggest challenges right now"*
+- **Targeted Question Generation**: *"Generate 5 targeted questions based on my biggest challenges right now"*
+- **Question Processing**: *"Let's do them all in order"* → Claude presents questions and saves answers automatically
 - **Data Export**: *"Create a comprehensive life summary from all my biography data"*
 - **Schedule Management**: *"Help me optimize my cron schedule based on my current priorities"*
 
-### Traditional Interactive Components
+**Advanced Question Workflows:**
+- **Challenge Analysis**: Claude identifies key challenges from biography data and generates targeted questions
+- **Interactive Q&A Sessions**: Questions presented with appropriate dialog interfaces (notifications, forms)
+- **Automatic Answer Routing**: Responses saved to optimal topic locations with timestamps
+- **Follow-up Generation**: Additional questions generated based on answer patterns and gaps
 
-- **Biography Questions**: Appear as notifications every 30 minutes (automated)
-- **Progress Questions**: Triggered after weekly Covey reviews (automated)
+### Interactive Components
+
+- **Biography Questions**: Appear as notifications every 30 minutes (automated via cron)
+- **Pre-Review Questions**: Extracted from Claude analysis output and presented systematically
+- **Quick Questions**: On-demand question presentation with automatic topic integration
 - **Task Management**: Checkbox-based progress tracking in generated files (automated)
-- **Claude Sessions**: Interactive analysis and file updates (manual via `claude` command)
+- **Claude Sessions**: Interactive analysis, question generation, and file updates (manual via `claude` command)
 
 ## Output Files
 
