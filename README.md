@@ -38,7 +38,6 @@ A comprehensive personal development and biography collection system that uses C
 ```
 biography/
 ├── tasks/                     # Cron job scripts
-│   ├── biography-questions.sh      # Claude-powered essentialist question prioritization
 │   ├── covey-analysis-simple.sh    # Monthly comprehensive Covey analysis
 │   ├── covey-weekly-review.sh      # Weekly progress reviews  
 │   ├── adhd-task-prioritizer.sh    # Daily task list generation
@@ -48,9 +47,8 @@ biography/
 │   ├── auto_config.py              # Python configuration module
 │   ├── claude-wrapper.sh           # Claude AI integration wrapper
 │   ├── topic-manager.sh            # Claude-powered topic routing & consolidation
+│   ├── question-manager.sh         # Unified question management with context control
 │   ├── generate-questions.sh       # Intelligent question generation
-│   ├── quick-question.sh           # Simple question presenter with topic integration
-│   ├── pre-review-questioner.sh    # Pre-review question processor
 │   ├── extract-qa-data.py          # Q&A data parsing utilities
 │   ├── extract-new-topics.sh       # Topic extraction from analysis
 │   ├── daily-summary.py            # Daily summary generation
@@ -117,8 +115,8 @@ Configuration is automatically loaded by all scripts through `utils/auto-config.
 The install script automatically configures cron jobs. Manual configuration:
 
 ```bash
-# Biography questions every 30 minutes (essentialist prioritization)
-*/30 * * * * $HOME/biography/tasks/biography-questions.sh
+# Essential questions every 30 minutes (essentialist prioritization)
+*/30 * * * * $HOME/biography/utils/question-manager.sh pop
 
 # Daily morning ADHD task refresh
 0 7 * * * $HOME/biography/tasks/adhd-task-prioritizer.sh
@@ -211,8 +209,11 @@ claude
 If you prefer direct script interaction:
 
 ```bash
-# Generate essentialist-prioritized biography questions
-./tasks/biography-questions.sh
+# Unified question management
+./utils/question-manager.sh pop                    # Get most essential existing question
+./utils/question-manager.sh -b ask "Question?"     # Ask with biography context
+echo "Question?" | ./utils/question-manager.sh ask # Piped input
+./utils/question-manager.sh -rb7 generate --challenges 5  # Generate targeted questions
 
 # Run comprehensive Covey analysis
 ./tasks/covey-analysis-simple.sh
@@ -227,12 +228,6 @@ If you prefer direct script interaction:
 ./utils/topic-manager.sh route-question "Your question here"
 ./utils/topic-manager.sh consolidate "Topic Name"
 ./utils/topic-manager.sh create "New Topic"
-
-# Ask quick questions from piped input
-echo "Your question here?" | ./utils/quick-question.sh
-
-# Process pre-review questions from Claude output
-./utils/pre-review-questioner.sh /path/to/claude-output.txt
 ```
 
 ### Topic Management System
@@ -262,28 +257,44 @@ The Claude-powered topic manager provides intelligent organization:
 - **Smart Consolidation**: Merges redundant questions into comprehensive insights
 - **Analytics**: Completion rates, activity tracking, relationship mapping
 
-### Quick Question System
+### Question Management System
 
-The system provides flexible question presentation and automatic biography integration:
+The unified question manager provides flexible question presentation with intelligent context control:
 
 ```bash
-# Ask any question with automatic topic routing and answer saving
-echo "What's your biggest obstacle to daily job applications?" | ./utils/quick-question.sh
+# Get most essential existing question (essentialist prioritization)
+./utils/question-manager.sh pop
 
-# Multiple questions can be piped in sequence
-echo "Morning routine obstacle?" | ./utils/quick-question.sh
-echo "Time management challenge?" | ./utils/quick-question.sh
+# Ask single questions with context control
+./utils/question-manager.sh -b ask "What's blocking me?"           # Biography context
+./utils/question-manager.sh -rb7 ask "Latest productivity trends?" # Research + context
+echo "Morning routine issue?" | ./utils/question-manager.sh ask   # Piped input
 
-# Process questions from Claude analysis output
-./utils/pre-review-questioner.sh /path/to/analysis-output.txt
+# Generate targeted questions
+./utils/question-manager.sh generate --challenges 5               # Challenge-based questions
+./utils/question-manager.sh -r generate "Health" 3               # Research + topic questions
+
+# Process questions from files
+./utils/question-manager.sh ask --from-file analysis-output.txt   # Claude output
+./utils/question-manager.sh ask --batch questions.txt            # Multiple questions
+
+# Continue conversations (fast follow-ups)
+./utils/question-manager.sh -rb7 ask "First question"
+./utils/question-manager.sh -c ask "Follow-up question"          # Continue context
 ```
 
-**Quick Question Features:**
-- **Automatic Topic Routing**: Questions are intelligently routed to appropriate topic files
-- **Answer Persistence**: All responses saved to biography system with timestamps
-- **Flexible Input**: Supports piped input or command-line arguments
-- **Claude Integration**: Uses Claude wrapper for optimal presentation method
-- **Cross-Platform Dialogs**: Supports notify-send, zenity, and other dialog systems
+**Context Flags (stackable like `ls -la`):**
+- **Core**: `-b` (biography), `-m` (mission), `-7` (7habits), `-a` (adhd-tasks), `-p` (priorities)
+- **Recent**: `-q` (recent-qa), `-w` (weekly-review), `-d` (daily-summary)
+- **Research**: `-r` (research), `-c` (continue), `-f` (fast), `-A` (all), `-v` (verbose), `-n` (dry-run)
+
+**Key Features:**
+- **Unix-Style Interface**: Stackable flags like `-rb7m` for combined context
+- **Smart Defaults**: Commands automatically load appropriate context if no flags specified
+- **Automatic Topic Integration**: Questions routed and saved via topic-manager
+- **Research Capability**: Online research integration with `-r` flag
+- **Continue Mode**: Fast follow-up questions with `-c` to maintain conversation context
+- **Flexible Input**: Command args, piped input, file processing, batch operations
 
 ### 🔄 Claude-Enhanced Workflows
 
@@ -295,22 +306,24 @@ echo "Time management challenge?" | ./utils/quick-question.sh
 
 **Maintenance Workflows:**
 - **System Optimization**: *"Review my topic files and suggest consolidations or reorganizations"*
-- **Targeted Question Generation**: *"Generate 5 targeted questions based on my biggest challenges right now"*
-- **Question Processing**: *"Let's do them all in order"* → Claude presents questions and saves answers automatically
+- **Targeted Question Generation**: *"question-manager.sh generate --challenges 5"*
+- **Essential Question Pop**: *"question-manager.sh pop"* → Claude finds most important existing question
 - **Data Export**: *"Create a comprehensive life summary from all my biography data"*
 - **Schedule Management**: *"Help me optimize my cron schedule based on my current priorities"*
 
-**Advanced Question Workflows:**
-- **Challenge Analysis**: Claude identifies key challenges from biography data and generates targeted questions
-- **Interactive Q&A Sessions**: Questions presented with appropriate dialog interfaces (notifications, forms)
-- **Automatic Answer Routing**: Responses saved to optimal topic locations with timestamps
-- **Follow-up Generation**: Additional questions generated based on answer patterns and gaps
+**Question Management Workflows:**
+- **Challenge Analysis**: `question-manager.sh -rb7 generate --challenges 5` → Research-informed challenge questions
+- **Interactive Sessions**: `question-manager.sh -A pop` → Comprehensive context for essential questions
+- **Follow-up Conversations**: `question-manager.sh -rb7 ask "Initial question"` then `question-manager.sh -c ask "Follow-up"`
+- **Batch Processing**: `question-manager.sh ask --batch analysis-output.txt` → Process multiple questions
+- **Context-Aware Generation**: `question-manager.sh -7a generate "Health" 3` → Questions based on 7 Habits + ADHD tasks
 
 ### Interactive Components
 
-- **Biography Questions**: Appear as notifications every 30 minutes (automated via cron)
-- **Pre-Review Questions**: Extracted from Claude analysis output and presented systematically
-- **Quick Questions**: On-demand question presentation with automatic topic integration
+- **Essential Questions**: `question-manager.sh pop` finds most important existing question (automated via cron)
+- **Context-Aware Questions**: Smart context loading based on flags and command defaults
+- **Research-Enhanced Q&A**: Online research integration with `-r` flag
+- **Conversation Continuity**: Follow-up questions with `-c` flag maintain context
 - **Task Management**: Checkbox-based progress tracking in generated files (automated)
 - **Claude Sessions**: Interactive analysis, question generation, and file updates (manual via `claude` command)
 

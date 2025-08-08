@@ -33,7 +33,7 @@ mkdir -p "$(dirname "$LOG_FILE")"
 } >> "$LOG_FILE"
 
 # Execute claude and capture output
-OUTPUT=$("$CLAUDE_PATH" --dangerously-skip-permissions -p "$@" 2>&1)
+OUTPUT=$("$CLAUDE_PATH" --verbose --permission-mode bypassPermissions --dangerously-skip-permissions -p "$@" 2>&1)
 EXIT_CODE=$?
 
 # Log the output
