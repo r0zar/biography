@@ -1,0 +1,105 @@
+# Logs and temporary files
+*.log
+*.tmp
+/tmp/
+/logs/
+
+# Environment and configuration overrides
+.env
+.env.local
+config.local.*
+settings.local.json
+
+# Claude Code settings (keep the directory structure but not local settings)
+.claude/settings.local.json
+.claude/memory/
+.claude/cache/
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+venv/
+env/
+ENV/
+
+# System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Process and runtime files
+*.pid
+*.sock
+
+# Cron logs (keep structure but not actual log files)
+/home/rozar/logs/
+biography-responses.log
+progress-responses.log
+claude-cron.log
+daily-summary.log
+biography-questions.log
+covey-*.log
+
+# Temporary prompt files
+*_prompt.txt
+/tmp/covey_prompt.txt
+/tmp/weekly_covey_prompt.txt
+/tmp/progress_questions_*.txt
+
+# Output files that shouldn't be tracked (these go in Obsidian Vault)
+*.md
+!README.md
+!*.template.md
+
+# Node modules (if any JavaScript tools are added later)
+node_modules/
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# Windows
+*.tmp
+*.temp
