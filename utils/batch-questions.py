@@ -1,6 +1,7 @@
 #!/usr/bin/python3
-from gi.repository import Notify, GLib
 import gi
+gi.require_version('Notify', '0.7')
+from gi.repository import Notify, GLib
 import os
 import sys
 import re
@@ -8,14 +9,15 @@ from datetime import datetime
 import time
 
 # Auto-load configuration
-from utils.auto_config import VAULT_DIR, LOGS_DIR
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from auto_config import VAULT_DIR, LOGS_DIR
 
 # Set environment for cron
 os.environ['DISPLAY'] = ':1'
 if 'DBUS_SESSION_BUS_ADDRESS' not in os.environ:
     os.environ['DBUS_SESSION_BUS_ADDRESS'] = 'unix:path=/run/user/1000/bus'
-
-gi.require_version('Notify', '0.7')
 
 
 class BatchQuestionNotifier:
@@ -38,6 +40,77 @@ class BatchQuestionNotifier:
 
     def find_unanswered_questions(self, limit=10):
         """Find up to 'limit' unanswered questions from all files"""
+        try:
+            topics_dir = os.path.join(self.vault_dir, "Topics")
+            
+            # List of files to search - Biography.md first, then all topic files
+            files_to_search = [os.path.join(self.vault_dir, "Biography.md")]
+            
+            # Add all topic files
+            if os.path.exists(topics_dir):
+                for filename in os.listdir(topics_dir):
+                    if filename.endswith('.md'):
+                        files_to_search.append(os.path.join(topics_dir, filename))
+            
+            questions = []
+            
+            # Find unanswered questions - simple direct approach
+            for filepath in files_to_search:
+                if not os.path.exists(filepath):
+                    continue
+                    
+                try:
+                    with open(filepath, 'r') as f:
+                        content = f.read()
+                    
+                    lines = content.split('\n')
+                    
+                    for line in lines:
+                        if line.strip().startswith('- ❌') and len(line.strip()) > 4:
+                            question = line.strip()[4:].strip()  # Remove "- ❌ "
+                            if question and question != "Not asked yet":
+                                # Parse custom button labels if they exist
+                                yes_label, no_label = "Yes", "No"  # defaults
+
+                                # Check for custom labels in square brackets
+                                if '[' in question and ']' in question:
+                                    label_start = question.rfind('[')
+                                    label_end = question.rfind(']')
+
+                                    if label_start < label_end:
+                                        label_section = question[label_start+1:label_end]
+                                        clean_question = question[:label_start].strip()
+
+                                        # Parse Yes=Label1|No=Label2 format
+                                        if '|' in label_section:
+                                            parts = label_section.split('|')
+                                            for part in parts:
+                                                part = part.strip()
+                                                if part.startswith('Yes='):
+                                                    yes_label = part[4:].strip()
+                                                elif part.startswith('No='):
+                                                    no_label = part[3:].strip()
+
+                                        questions.append((clean_question, filepath, yes_label, no_label))
+                                    else:
+                                        questions.append((question, filepath, yes_label, no_label))
+                                else:
+                                    questions.append((question, filepath, yes_label, no_label))
+                                
+                                if len(questions) >= limit:
+                                    return questions[:limit]
+                                    
+                except Exception as e:
+                    continue  # Skip files that can't be read
+            
+            return questions
+
+        except Exception as e:
+            self.log(f"Error searching for questions: {e}")
+            return []
+
+    def find_unanswered_questions_old(self, limit=10):
+        """Old implementation - kept as fallback"""
         try:
             topics_dir = os.path.join(self.vault_dir, "Topics")
             
@@ -161,12 +234,8 @@ class BatchQuestionNotifier:
                                         new_line = f"- ✅ {question}\n  **Answer:** No *(answered {timestamp})*"
                                     elif status == "skip":
                                         new_line = f"- ⏭ {question} *(skipped {timestamp})*"
-                                    elif status == "pending":
-                                        new_line = f"- ⏳ {question} *(asked {timestamp})*"
-                                    elif status == "unanswered":
-                                        new_line = f"- ❌ {question}"
                                     else:
-                                        new_line = f"- ⏳ {question} *(asked {timestamp})*"
+                                        new_line = f"- ❌ {question}"
                                     
                                     # Replace the question
                                     updated_content = re.sub(pattern, new_line, content, count=1, flags=re.MULTILINE)
@@ -230,12 +299,8 @@ class BatchQuestionNotifier:
         self.no_label = no_label
         
         try:
-            # First, mark the question as pending (⏳) before asking
-            self.update_question_status(question, "pending")
-            self.log(f"Marked question as pending: {question}")
-            
             notice = Notify.Notification.new(
-                f"📖 Biography Question ({self.questions_answered + 1}/10)",
+                f"📖 Biography Question ({self.questions_answered + 1}/3)",
                 f"{question}\n",
                 "dialog-question"
             )
@@ -252,18 +317,15 @@ class BatchQuestionNotifier:
 
             # Keep alive for user interaction (max 5 minutes)
             self.loop = GLib.MainLoop()
-            GLib.timeout_add_seconds(300, self.handle_timeout)  # 5 minute timeout
+            GLib.timeout_add_seconds(300, self.loop.quit)  # 5 minute timeout
 
             try:
                 self.loop.run()
             except KeyboardInterrupt:
                 self.log("Question interrupted")
-                self.handle_timeout()  # Also revert on interrupt
 
         except Exception as e:
             self.log(f"Error sending question: {e}")
-            # If there's an error, revert the question back to unanswered
-            self.update_question_status(question, "unanswered")
 
     def run_batch(self, count=10):
         """Run batch of questions"""

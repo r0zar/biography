@@ -13,50 +13,63 @@ log() {
 
 log "Starting intelligent biography question session"
 
-# First check if there are any pending questions that need to be answered
-log "Checking for pending questions before generating new ones"
-python3 "$SCRIPTS_DIR/utils/biography-notification.py" --check-pending-only 2>/dev/null
-PENDING_CHECK_RESULT=$?
+# Generate up to 3 prioritized questions using Claude's intelligence with --continue
+echo "📖 Biography Q&A Session - up to 3 questions"
 
-if [ $PENDING_CHECK_RESULT -eq 1 ]; then
-    log "Found pending questions - presenting them for response instead of generating new ones"
-    echo "⏳ Found pending questions - presenting them now..."
-    
-    # Present the pending questions for response
-    "$SCRIPTS_DIR/utils/biography-notification.py"
-    exit 0
-fi
+# Initial prompt to load all context
+INITIAL_PROMPT="BIOGRAPHY Q&A SESSION - GENERATE 3 PRIORITIZED QUESTIONS
 
-log "No pending questions found, proceeding with new question generation"
+I need to generate 3 high-priority biography questions in sequence using -c for efficiency.
 
-# Intelligent Claude prompt for generating contextual questions with smart topic routing
-CLAUDE_PROMPT="I'm building a comprehensive biography through regular Yes/No question sessions using focused topic pages. Please:
+**FIRST, LOAD ALL CONTEXT:**
+1. Read Priority Management file at $VAULT_DIR/Priority-Management.md to understand current vital few priorities
+2. Read Covey analysis at $COVEY_FILE to understand effectiveness gaps and areas needing attention  
+3. Read mission statement at $MISSION_FILE to understand core values and life purpose
+4. Scan ALL topic files in $VAULT_DIR/Topics/ to see:
+   - Existing unanswered questions (marked with ❌) - AVOID generating similar questions
+   - Recently answered questions (marked with ✅) - understand what's already been explored
+   - Note any recurring themes or duplicate question patterns to AVOID
 
-1. First read the instructions at $BIOGRAPHY_PROMPT_FILE to understand your role and approach
-2. Then read my current Q&A data at $BIOGRAPHY_FILE and scan existing topic pages to understand what I've already shared
-3. Review my current Stephen Covey analysis at $COVEY_FILE to understand my development areas and effectiveness gaps
-4. Read my personal mission statement at $MISSION_FILE to understand my core values, family aspirations, and life purpose
-5. Generate ONE contextual Yes/No question that either:
-   - Explores the most at-risk areas of my life based on the Covey analysis
-   - Discovers new details of my life haven't been documented yet
-   - OR addresses development areas identified in the Covey analysis 
-   - OR helps assess alignment with my mission statement values (family devotion, creative expression, ethical integrity, wealth creation, fighting injustice)
-6. Use $SCRIPTS_DIR/utils/topic-manager.sh route-question \"[your question]\" to determine the best topic file  
-7. Add the question to the appropriate file using the topic-manager.sh script
-8. Call "$SCRIPTS_DIR/utils/biography-notification.py" to send the interactive notification
+**NOW GENERATE QUESTION 1:**
+Based on ALL this context, identify the SINGLE most important question to ask right now that will:
+- Address the highest priority areas from Priority Management
+- Target effectiveness gaps with low completion rates
+- Align with mission statement values (family security, career transition urgency)
+- Fill critical knowledge gaps for current life situation
+- BE COMPLETELY DIFFERENT from existing questions (avoid duplicates or near-duplicates)
+- Explore NEW angles not already covered by recent questions
 
-The system will ALWAYS route questions to focused topic pages - never to Biography.md. Use both the Covey analysis insights and mission statement to generate more targeted questions that help assess progress toward life goals and address effectiveness gaps.
+Then:
+1. Use $SCRIPTS_DIR/utils/topic-manager.sh route-question \"[your question]\" to determine the best topic file
+2. Add the question using topic-manager.sh add-question \"Topic Name\" \"question text\"
+3. Format questions with two specific options as: \"Question? [Yes=Option1|No=Option2]\"
+4. Call $SCRIPTS_DIR/utils/biography-notification.py to present the question immediately
 
-IMPORTANT: Never route questions to Biography.md. Always use topic pages. If no existing topic fits, create a new appropriate topic page.
+Focus on the most URGENT and IMPORTANT areas based on Priority Management vital few."
 
-The instructions file contains all the details about how to approach this task effectively."
+log "Loading context and generating question 1 of 3"
+"$SCRIPTS_DIR/utils/claude-wrapper.sh" "$INITIAL_PROMPT"
 
-# Use claude_wrapper to execute the intelligent biography prompt  
-log "Calling claude_wrapper with intelligent biography prompt"
-"$SCRIPTS_DIR/utils/claude-wrapper.sh" "$CLAUDE_PROMPT"
+# Continue with question 2
+log "Generating question 2 of 3 using continued context"
+"$SCRIPTS_DIR/utils/claude-wrapper.sh" -c "GENERATE QUESTION 2:
 
-# Always call the notification script after Claude is done
-log "Calling notification script"
-"$SCRIPTS_DIR/utils/biography-notification.py"
+Now generate the SECOND most important question, considering:
+- What was just asked in question 1 - AVOID similar themes
+- The remaining high-priority areas from Priority Management  
+- Different topic areas to get broader coverage
+- COMPLETELY DIFFERENT angle from question 1 and all existing questions
+- Same process: route, add, format with custom labels, and present via notification"
 
-log "Intelligent biography question session completed"
+# Continue with question 3  
+log "Generating question 3 of 3 using continued context"
+"$SCRIPTS_DIR/utils/claude-wrapper.sh" -c "GENERATE QUESTION 3:
+
+Generate the THIRD most important question, considering:
+- Questions 1 and 2 that were just asked - AVOID similar themes entirely
+- Remaining priority areas to ensure comprehensive coverage
+- Focus on any critical gaps not yet addressed  
+- MUST be completely unique - different topic area if possible
+- Same process: route, add, format with custom labels, and present via notification"
+
+log "Biography question batch completed"
