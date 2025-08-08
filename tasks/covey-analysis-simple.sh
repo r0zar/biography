@@ -56,6 +56,13 @@ IMPORTANT: Include at the top of the document:
 - Data Snapshot: Based on $QUESTION_COUNT biography responses through $(date '+%Y-%m-%d')
 - Next Recommended Review: $(date -d '+1 week' '+%B %d, %Y')
 
+OUTPUT NOTES:
+- Use Obsidian-compatible markdown
+- Include internal links: `[[Biography]]`, `[[Career Transition]]`
+- Add relevant tags: `#covey #effectiveness #7habits #career`
+- Include timestamp and review recommendations
+- Structure with clear headings and bullet points
+
 Also add at the bottom:
 *This analysis reflects your situation as of ${DATE_READABLE} based on $QUESTION_COUNT answered questions across all biography topic areas. Your circumstances and responses may evolve, so periodic re-analysis is recommended.*
 EOF

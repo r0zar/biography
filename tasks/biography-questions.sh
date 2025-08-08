@@ -1,75 +1,72 @@
 #!/bin/bash
 
 # Biography Questions Script
-# Uses Claude to generate intelligent, contextual biography questions
+# Uses Greg McKeown's Essentialism principles to identify the most essential existing question
 
 # Auto-load configuration
 source "$(dirname "$0")/../utils/auto-config.sh"
+
+# Set GUI environment variables for proper dialog display
+export DISPLAY="${DISPLAY:-:1}"
+export XAUTHORITY="${XAUTHORITY:-$HOME/.Xauthority}"
+export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}"
+
+# Get theme settings from user's actual environment
+# if command -v gsettings >/dev/null 2>&1; then
+#     USER_GTK_THEME=$(gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null | tr -d "'")
+#     if [ -n "$USER_GTK_THEME" ] && [ "$USER_GTK_THEME" != "null" ]; then
+#         export GTK_THEME="$USER_GTK_THEME"
+#     fi
+# fi
 
 # Log function
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S'): $1" >> "$BIOGRAPHY_LOG"
 }
 
-log "Starting intelligent biography question session"
+log "Starting essentialist question prioritization session"
 
-# Generate up to 3 prioritized questions using Claude's intelligence with --continue
-echo "📖 Biography Q&A Session - up to 3 questions"
+echo "📖 Essentialist Biography Q&A - Asking the most essential question"
 
-# Initial prompt to load all context
-INITIAL_PROMPT="BIOGRAPHY Q&A SESSION - GENERATE 3 PRIORITIZED QUESTIONS
+# Execute essentialist question prioritization
+ESSENTIALIST_PROMPT="Please perform essentialist question prioritization:
 
-I need to generate 3 high-priority biography questions in sequence using -c for efficiency.
+SYSTEM INFO:
+- OS: $(uname -s) $(uname -r)
+- Desktop: ${XDG_CURRENT_DESKTOP:-Unknown}
+- Display: ${DISPLAY:-Not set}
 
-**FIRST, LOAD ALL CONTEXT:**
-1. Read Priority Management file at $VAULT_DIR/Priority-Management.md to understand current vital few priorities
-2. Read Covey analysis at $COVEY_FILE to understand effectiveness gaps and areas needing attention  
-3. Read mission statement at $MISSION_FILE to understand core values and life purpose
-4. Scan ALL topic files in $VAULT_DIR/Topics/ to see:
-   - Existing unanswered questions (marked with ❌) - AVOID generating similar questions
-   - Recently answered questions (marked with ✅) - understand what's already been explored
-   - Note any recurring themes or duplicate question patterns to AVOID
+CONTEXT LOADING:
+1. Read the agent instructions at $ESSENTIALIST_PROMPT_FILE
+2. Read Priority Management file at $VAULT_DIR/Priority-Management.md
+3. Read Covey analysis at $COVEY_FILE
+4. Read mission statement at $MISSION_FILE
+5. Read current ADHD tasks file at $VAULT_DIR/ADHD-Tasks.md to identify the top priority areas
 
-**NOW GENERATE QUESTION 1:**
-Based on ALL this context, identify the SINGLE most important question to ask right now that will:
-- Address the highest priority areas from Priority Management
-- Target effectiveness gaps with low completion rates
-- Align with mission statement values (family security, career transition urgency)
-- Fill critical knowledge gaps for current life situation
-- BE COMPLETELY DIFFERENT from existing questions (avoid duplicates or near-duplicates)
-- Explore NEW angles not already covered by recent questions
+TASK:
+1. Identify the single most important priority from the ADHD tasks file (morning discipline, job performance, etc.)
+2. Scan the relevant topic files for existing unanswered questions (❌) related to that priority
+3. If suitable question exists, select it for presentation
+4. If no suitable question exists, create a new essential question that:
+   - Addresses the specific ADHD task priority identified
+   - Can be answered with actionable yes/no or specific options
+   - Helps overcome the current completion rate bottlenecks (17% job apps, 29% morning discipline)
+   - Add this new question to the most appropriate topic file with ❌ status
+5. Present the selected/created question using the most appropriate dialog interface
 
-Then:
-1. Use $SCRIPTS_DIR/utils/topic-manager.sh route-question \"[your question]\" to determine the best topic file
-2. Add the question using topic-manager.sh add-question \"Topic Name\" \"question text\"
-3. Format questions with two specific options as: \"Question? [Yes=Option1|No=Option2]\"
-4. Call $SCRIPTS_DIR/utils/biography-notification.py to present the question immediately
+DIALOG PRESENTATION:
+- PREFERRED: If question is short (under 80 characters) and has simple yes/no or 2-3 option responses, use notify-send with action buttons for lightweight interaction
+- FALLBACK: For longer/complex questions, use dialog tools like zenity
+- Format question text properly for shell execution (escape quotes, etc.)
+- Create appropriate button options based on question type
+- For notifications: Use notify-send with -A parameters for interactive responses
+  * Returns numeric index: 0=first button, 1=second button, etc.  
+  * More reliable than dialog windows for text visibility
+  * Integrates naturally with desktop environment
+- For dialogs: Current GTK_THEME is set to: ${GTK_THEME:-default}
+- Handle response and update markdown file with proper status and timestamp"
 
-Focus on the most URGENT and IMPORTANT areas based on Priority Management vital few."
+log "Applying essentialist principles to identify the most critical existing question"
+"$SCRIPTS_DIR/utils/claude-wrapper.sh" "$ESSENTIALIST_PROMPT"
 
-log "Loading context and generating question 1 of 3"
-"$SCRIPTS_DIR/utils/claude-wrapper.sh" "$INITIAL_PROMPT"
-
-# Continue with question 2
-log "Generating question 2 of 3 using continued context"
-"$SCRIPTS_DIR/utils/claude-wrapper.sh" -c "GENERATE QUESTION 2:
-
-Now generate the SECOND most important question, considering:
-- What was just asked in question 1 - AVOID similar themes
-- The remaining high-priority areas from Priority Management  
-- Different topic areas to get broader coverage
-- COMPLETELY DIFFERENT angle from question 1 and all existing questions
-- Same process: route, add, format with custom labels, and present via notification"
-
-# Continue with question 3  
-log "Generating question 3 of 3 using continued context"
-"$SCRIPTS_DIR/utils/claude-wrapper.sh" -c "GENERATE QUESTION 3:
-
-Generate the THIRD most important question, considering:
-- Questions 1 and 2 that were just asked - AVOID similar themes entirely
-- Remaining priority areas to ensure comprehensive coverage
-- Focus on any critical gaps not yet addressed  
-- MUST be completely unique - different topic area if possible
-- Same process: route, add, format with custom labels, and present via notification"
-
-log "Biography question batch completed"
+log "Essentialist question prioritization completed"

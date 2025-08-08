@@ -40,7 +40,7 @@ biography/
 │   ├── auto-config.sh              # Centralized configuration management
 │   ├── auto_config.py              # Python configuration module
 │   ├── claude-wrapper.sh           # Claude AI integration wrapper
-│   ├── biography-notification.py   # Biography Q&A notifications
+│   ├── [REMOVED] biography-notification.py (now handled via direct dialog commands)
 │   ├── progress-notification.py    # Progress tracking notifications
 │   ├── progress-questioner.sh      # Progress question presenter
 │   ├── extract-qa-data.py          # Q&A data parsing utilities
@@ -48,7 +48,7 @@ biography/
 │   ├── extract-new-topics.sh       # Topic extraction from analysis
 │   ├── daily-summary.py            # Daily summary generation
 │   ├── generate-narrative.sh       # Narrative creation from Q&A data
-│   └── batch-questions.py          # Bulk question generation
+│   └── generate-questions.sh # Question generation (extracted from tasks)
 └── prompts/                   # AI agent instructions
     ├── stephen-covey-instructions.md   # Covey analysis agent prompt
     └── biography_instructions.md       # Biography collection agent prompt

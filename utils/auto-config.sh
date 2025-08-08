@@ -14,7 +14,7 @@ SCRIPTS_DIR="${SCRIPTS_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 # Core directories - can be overridden with environment variables
 export VAULT_DIR="${VAULT_DIR:-$HOME/Documents/Obsidian Vault}"
-export LOGS_DIR="${LOGS_DIR:-$HOME/logs}"
+export LOGS_DIR="${LOGS_DIR:-$SCRIPTS_DIR/logs}"
 export TOPICS_DIR="${TOPICS_DIR:-$VAULT_DIR/Topics}"
 export PROMPTS_DIR="${PROMPTS_DIR:-$SCRIPTS_DIR/prompts}"
 
@@ -25,8 +25,11 @@ export COVEY_FILE="${COVEY_FILE:-$VAULT_DIR/Covey-Life-Analysis.md}"
 export ADHD_TASKS_FILE="${ADHD_TASKS_FILE:-$VAULT_DIR/ADHD-Tasks.md}"
 
 # Prompt files
-export BIOGRAPHY_PROMPT_FILE="${BIOGRAPHY_PROMPT_FILE:-$PROMPTS_DIR/biography_instructions.md}"
 export COVEY_PROMPT_FILE="${COVEY_PROMPT_FILE:-$PROMPTS_DIR/stephen-covey-instructions.md}"
+export ESSENTIALIST_PROMPT_FILE="${ESSENTIALIST_PROMPT_FILE:-$PROMPTS_DIR/greg-mckeown-essentialist-instructions.md}"
+
+# Template files
+export QUESTION_FORMAT_TEMPLATE="${QUESTION_FORMAT_TEMPLATE:-$SCRIPTS_DIR/templates/question-generation-format.md}"
 
 # Log files
 export BIOGRAPHY_LOG="${BIOGRAPHY_LOG:-$LOGS_DIR/biography-questions.log}"

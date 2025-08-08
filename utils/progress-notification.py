@@ -1,10 +1,8 @@
 #!/usr/bin/python3
-import gi
-gi.require_version('Notify', '0.7')
-from gi.repository import Notify, GLib
 import os
 import sys
 import re
+import subprocess
 from datetime import datetime
 
 # Auto-load configuration
@@ -13,17 +11,13 @@ from auto_config import VAULT_DIR, LOGS_DIR
 
 # Set environment for cron
 os.environ['DISPLAY'] = ':1'
-if 'DBUS_SESSION_BUS_ADDRESS' not in os.environ:
-    os.environ['DBUS_SESSION_BUS_ADDRESS'] = 'unix:path=/run/user/1000/bus'
 
 
 class ProgressNotifier:
     def __init__(self, question, positive_label="Good", negative_label="Poor"):
-        Notify.init("CoveyProgressBot")
         self.question = question
         self.positive_label = positive_label
         self.negative_label = negative_label
-        self.loop = None
         self.log_file = os.path.join(LOGS_DIR, 'progress-responses.log')
 
     def log(self, message):
@@ -44,67 +38,39 @@ class ProgressNotifier:
             
         self.log(f"Recorded progress response: {response}")
 
-    def on_positive_clicked(self, notification, action, data):
-        """Handle positive response (Good/Strong/Better/etc.)"""
-        self.log(f"User selected: {self.positive_label}")
-        self.record_response(self.positive_label)
-        notification.close()
-        if self.loop:
-            self.loop.quit()
-
-    def on_negative_clicked(self, notification, action, data):
-        """Handle negative response (Poor/Weak/Worse/etc.)"""
-        self.log(f"User selected: {self.negative_label}")
-        self.record_response(self.negative_label)
-        notification.close()
-        if self.loop:
-            self.loop.quit()
-
-    def on_closed(self, notification):
-        """Handle notification closed without response"""
-        self.log("Progress notification closed without response")
-        if self.loop:
-            self.loop.quit()
-
     def show_notification(self):
-        """Show progress question notification with custom buttons"""
+        """Show progress question using Zenity dialog"""
         try:
-            notification = Notify.Notification.new(
-                "Weekly Progress Check",
-                self.question,
-                "dialog-question"
-            )
+            # Use zenity question dialog with custom buttons
+            result = subprocess.run([
+                'zenity', '--question',
+                '--title=📊 Weekly Progress Check',
+                f'--text={self.question}',
+                f'--ok-label=✅ {self.positive_label}',
+                f'--cancel-label=❌ {self.negative_label}',
+                '--width=600',
+                '--height=200'
+            ], capture_output=True, text=True)
             
-            # Set longer timeout for progress questions
-            notification.set_timeout(30000)  # 30 seconds
-            
-            # Add custom action buttons
-            notification.add_action(
-                "positive",
-                self.positive_label,
-                self.on_positive_clicked,
-                None
-            )
-            
-            notification.add_action(
-                "negative", 
-                self.negative_label,
-                self.on_negative_clicked,
-                None
-            )
-            
-            notification.connect("closed", self.on_closed)
-            notification.show()
-            
-            # Run event loop to wait for response
-            self.loop = GLib.MainLoop()
-            self.loop.run()
+            # Handle response based on return code
+            if result.returncode == 0:
+                # Positive button clicked
+                self.log(f"User selected: {self.positive_label}")
+                self.record_response(self.positive_label)
+            elif result.returncode == 1:
+                # Negative button clicked  
+                self.log(f"User selected: {self.negative_label}")
+                self.record_response(self.negative_label)
+            else:
+                # Dialog was cancelled or closed
+                self.log("Progress dialog cancelled/closed without response")
+                return False
+                
+            return True
             
         except Exception as e:
             self.log(f"Error showing progress notification: {e}")
             return False
-            
-        return True
 
 
 def ask_progress_question(question, positive_label="Good", negative_label="Poor"):

@@ -115,7 +115,7 @@ Write a flowing narrative that captures their essence based on today's responses
         output_file = f"/tmp/claude_output_{os.getpid()}.txt"
 
         # Execute claude wrapper and redirect output to file
-        cmd = f"{SCRIPTS_DIR}/claude-wrapper.sh \"$(cat {prompt_file})\" > {output_file} 2>&1"
+        cmd = f"{SCRIPTS_DIR}/utils/claude-wrapper.sh \"$(cat {prompt_file})\" > {output_file} 2>&1"
         result_code = os.system(cmd)
 
         log(f"Claude shell command return code: {result_code}")
