@@ -61,6 +61,7 @@ scripts/
 - **Claude AI CLI** - [Installation Guide](https://docs.anthropic.com/en/docs/claude-code)
 - **Linux/Unix environment** with cron support
 - **Display server** for GTK notifications
+- **Obsidian** (recommended) - Scripts generate markdown with Obsidian-style links `[[Topic]]` and tags `#covey #effectiveness`. Works with any markdown editor but optimized for Obsidian's linking system.
 
 ### Configuration
 
@@ -126,14 +127,16 @@ Add to crontab (`crontab -e`):
 
 ## Output Files
 
-All generated content goes to `$VAULT_DIR`:
+All generated content goes to `$VAULT_DIR` as Obsidian-compatible markdown:
 
 - `Biography.md` - Main biography Q&A collection
-- `Topics/*.md` - Specialized topic areas
-- `Covey-Life-Analysis.md` - Current monthly analysis
+- `Topics/*.md` - Specialized topic areas with internal links
+- `Covey-Life-Analysis.md` - Current monthly analysis with `[[Biography]]` links
 - `Weekly-Covey-Review-[date].md` - Weekly progress reviews
-- `ADHD-Tasks.md` - Current prioritized task list
+- `ADHD-Tasks.md` - Current prioritized task list with checkboxes
 - `[date].md` - Daily summary files
+
+*Note: Files use Obsidian syntax (`[[Internal Links]]`, `#tags`) but work with any markdown editor.*
 
 ## Key Features
 
