@@ -22,97 +22,49 @@ fi
 
 log "Processing Claude output from: $CLAUDE_OUTPUT_FILE"
 
-# Extract questions from Claude output
-log "Analyzing Claude output file: $CLAUDE_OUTPUT_FILE"
-log "File size: $(wc -c < "$CLAUDE_OUTPUT_FILE" 2>/dev/null || echo "0") bytes"
+# Execute generic prompt for pre-review question processing through Claude
+GENERIC_PROMPT="Please process this Claude output file and extract pre-review questions:
 
-# Debug: Show first few lines of Claude output
-log "First 10 lines of Claude output:"
-head -10 "$CLAUDE_OUTPUT_FILE" >> "$LOGS_DIR/pre-review-questioner.log"
+INPUT FILE: $CLAUDE_OUTPUT_FILE
 
-# Look for numbered questions with the format: "1. Question text? → Button options: "Option1/Option2""
-QUESTIONS_FOUND=0
-TEMP_QUESTIONS="/tmp/pre_review_questions_$(date +%s).txt"
+CONTEXT:
+- This file contains Claude analysis output with embedded pre-review questions
+- Questions are formatted like: \"1. Question text? → Button options: Option1/Option2\"
+- We need to extract and present these questions to fill knowledge gaps
 
-# Extract questions using grep and parsing
-log "Searching for numbered questions with button options..."
-grep -n "^[0-9]\+\." "$CLAUDE_OUTPUT_FILE" | grep "→.*Button options:" | while IFS=':' read -r line_num line_content; do
-    # Parse the question and button options
-    QUESTION=$(echo "$line_content" | sed 's/^[0-9]*\. *//' | sed 's/ *→.*$//')
-    BUTTONS=$(echo "$line_content" | sed 's/.*Button options: *"//' | sed 's/".*$//' | tr '/' ' ')
-    
-    # Remove markdown formatting from question text
-    QUESTION=$(echo "$QUESTION" | sed 's/\*\*//g' | sed 's/\*//g' | sed 's/`//g')
-    
-    if [ -n "$QUESTION" ] && [ -n "$BUTTONS" ]; then
-        echo "$QUESTION|$BUTTONS" >> "$TEMP_QUESTIONS"
-        log "Found pre-review question: $QUESTION"
-        QUESTIONS_FOUND=$((QUESTIONS_FOUND + 1))
-    fi
-done
+TASK:
+1. Read and analyze the Claude output file: $CLAUDE_OUTPUT_FILE
+2. Extract numbered questions with button options format
+3. For each question found:
+   - Present it using the best available interface (notify-send, zenity, etc.)
+   - Capture the user's response  
+   - Route through topic-manager to save in appropriate topic file
+   - Use proper status symbols (✅ for answered questions)
+   - Add timestamps for answers
 
-# Check if we found any questions
-if [ ! -f "$TEMP_QUESTIONS" ] || [ ! -s "$TEMP_QUESTIONS" ]; then
-    log "No pre-review questions found in Claude output"
-    exit 0
-fi
+PROCESSING APPROACH:
+- Look for pattern: \"[number]. [question text] → Button options: [options]\"
+- Remove markdown formatting from question text
+- Parse button options (usually Yes/No, High/Low, Good/Bad variants)
+- Present each question with appropriate delay between them
+- Save all responses to biography system via topic-manager routing
 
-ACTUAL_QUESTIONS=$(wc -l < "$TEMP_QUESTIONS" 2>/dev/null || echo 0)
-log "Found $ACTUAL_QUESTIONS pre-review questions to present"
+DIALOG PRESENTATION:
+- PREFERRED: Use notify-send with -A parameters for interactive responses
+- FALLBACK: Use zenity or other dialog tools for complex interactions
+- Current system: $(uname -s) with desktop ${XDG_CURRENT_DESKTOP:-Unknown}
+- Display: ${DISPLAY:-Not set}
 
-if [ "$ACTUAL_QUESTIONS" -gt 0 ]; then
-    echo "===================================================="
-    echo "PRE-REVIEW QUESTIONS"  
-    echo "===================================================="
-    echo "About to present $ACTUAL_QUESTIONS targeted questions"
-    echo "to fill knowledge gaps before the weekly review."
-    echo ""
-    echo "These questions will appear as notifications."
-    echo "Please answer them to improve the weekly analysis."
-    echo "===================================================="
-    echo ""
-fi
+TOPIC ROUTING:
+After getting responses, use topic-manager to save:
+- Call: $SCRIPTS_DIR/utils/topic-manager.sh route-question \"[question]\"
+- Then: $SCRIPTS_DIR/utils/topic-manager.sh update-status \"[question]\" \"✅\" \"[answer]\"
 
-# Present each question as a notification
-while IFS='|' read -r question buttons; do
-    if [ -n "$question" ] && [ -n "$buttons" ]; then
-        # Parse button labels (expecting exactly 2)
-        POSITIVE_LABEL=$(echo "$buttons" | awk '{print $1}')
-        NEGATIVE_LABEL=$(echo "$buttons" | awk '{print $2}')
-        
-        # Default to clear Yes/No if parsing fails
-        if [ -z "$POSITIVE_LABEL" ]; then
-            POSITIVE_LABEL="Yes"
-        fi
-        if [ -z "$NEGATIVE_LABEL" ]; then
-            NEGATIVE_LABEL="No"
-        fi
-        
-        # Make sure labels are clear and descriptive
-        # If they're too generic, enhance them
-        if [ "$POSITIVE_LABEL" = "High" ]; then
-            POSITIVE_LABEL="High/Strong"
-        elif [ "$POSITIVE_LABEL" = "Good" ]; then
-            POSITIVE_LABEL="Good/Working"
-        fi
-        
-        if [ "$NEGATIVE_LABEL" = "Low" ]; then
-            NEGATIVE_LABEL="Low/Weak"
-        elif [ "$NEGATIVE_LABEL" = "Poor" ]; then
-            NEGATIVE_LABEL="Poor/Broken"
-        fi
-        
-        log "Presenting pre-review question: $question (Options: $POSITIVE_LABEL/$NEGATIVE_LABEL)"
-        
-        # Present the notification and wait for response
-        "$SCRIPTS_DIR/utils/progress-notification.py" "$question" "$POSITIVE_LABEL" "$NEGATIVE_LABEL"
-        
-        # Small delay between questions to avoid overwhelming the user
-        sleep 2
-    fi
-done < "$TEMP_QUESTIONS"
+OUTPUT:
+Show user what questions were found and present them systematically.
+Report success/completion when done."
 
-# Clean up temp file
-rm -f "$TEMP_QUESTIONS"
+log "Processing pre-review questions through Claude wrapper"
+"$SCRIPTS_DIR/utils/claude-wrapper.sh" "$GENERIC_PROMPT"
 
 log "Pre-review questioner session completed"
