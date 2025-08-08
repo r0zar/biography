@@ -13,6 +13,22 @@ log() {
 
 log "Starting intelligent biography question session"
 
+# First check if there are any pending questions that need to be answered
+log "Checking for pending questions before generating new ones"
+python3 "$SCRIPTS_DIR/utils/biography-notification.py" --check-pending-only 2>/dev/null
+PENDING_CHECK_RESULT=$?
+
+if [ $PENDING_CHECK_RESULT -eq 1 ]; then
+    log "Found pending questions - presenting them for response instead of generating new ones"
+    echo "⏳ Found pending questions - presenting them now..."
+    
+    # Present the pending questions for response
+    "$SCRIPTS_DIR/utils/biography-notification.py"
+    exit 0
+fi
+
+log "No pending questions found, proceeding with new question generation"
+
 # Intelligent Claude prompt for generating contextual questions with smart topic routing
 CLAUDE_PROMPT="I'm building a comprehensive biography through regular Yes/No question sessions using focused topic pages. Please:
 

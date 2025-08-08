@@ -52,7 +52,26 @@ class BatchQuestionNotifier:
             
             questions = []
             
-            # Search each file for unanswered questions
+            # First check for any pending questions (⏳) - if any exist, don't ask new ones
+            for filepath in files_to_search:
+                if not os.path.exists(filepath):
+                    continue
+                    
+                try:
+                    with open(filepath, 'r') as f:
+                        content = f.read()
+                    
+                    lines = content.split('\n')
+                    for line in lines:
+                        if line.strip().startswith('- ⏳'):
+                            # Found a pending question - return empty list to indicate no new questions should be asked
+                            self.log("Found pending question - not asking new ones until it's answered")
+                            return []
+                            
+                except Exception as e:
+                    continue  # Skip files that can't be read
+            
+            # No pending questions found, search for unanswered questions
             for filepath in files_to_search:
                 if not os.path.exists(filepath):
                     continue
@@ -129,8 +148,8 @@ class BatchQuestionNotifier:
                                 with open(filepath, 'r', encoding='utf-8') as f:
                                     content = f.read()
                                 
-                                # Look for the question (with or without custom labels)
-                                pattern = rf'^- ❌ {re.escape(question)}.*?(\[.*?\])?$'
+                                # Look for the question (with or without custom labels) - match both ❌ and ⏳
+                                pattern = rf'^- [❌⏳] {re.escape(question)}.*?(\[.*?\])?(\s*\*.*\*)?$'
                                 if re.search(pattern, content, re.MULTILINE):
                                     # Create replacement text
                                     if status == "yes":
@@ -142,6 +161,10 @@ class BatchQuestionNotifier:
                                         new_line = f"- ✅ {question}\n  **Answer:** No *(answered {timestamp})*"
                                     elif status == "skip":
                                         new_line = f"- ⏭ {question} *(skipped {timestamp})*"
+                                    elif status == "pending":
+                                        new_line = f"- ⏳ {question} *(asked {timestamp})*"
+                                    elif status == "unanswered":
+                                        new_line = f"- ❌ {question}"
                                     else:
                                         new_line = f"- ⏳ {question} *(asked {timestamp})*"
                                     
@@ -189,6 +212,17 @@ class BatchQuestionNotifier:
         if self.loop:
             self.loop.quit()
 
+    def handle_timeout(self):
+        """Handle timeout or dismissal - revert pending question back to unanswered"""
+        if self.current_question:
+            self.update_question_status(self.current_question, "unanswered")
+            self.log(f"Question timed out or was dismissed, reverted to unanswered: {self.current_question}")
+        
+        if self.loop:
+            self.loop.quit()
+            
+        return False  # Don't repeat the timeout
+
     def send_question(self, question, yes_label, no_label):
         """Send a single question with Yes/No/Skip buttons"""
         self.current_question = question
@@ -196,6 +230,10 @@ class BatchQuestionNotifier:
         self.no_label = no_label
         
         try:
+            # First, mark the question as pending (⏳) before asking
+            self.update_question_status(question, "pending")
+            self.log(f"Marked question as pending: {question}")
+            
             notice = Notify.Notification.new(
                 f"📖 Biography Question ({self.questions_answered + 1}/10)",
                 f"{question}\n",
@@ -214,15 +252,18 @@ class BatchQuestionNotifier:
 
             # Keep alive for user interaction (max 5 minutes)
             self.loop = GLib.MainLoop()
-            GLib.timeout_add_seconds(300, self.loop.quit)  # 5 minute timeout
+            GLib.timeout_add_seconds(300, self.handle_timeout)  # 5 minute timeout
 
             try:
                 self.loop.run()
             except KeyboardInterrupt:
                 self.log("Question interrupted")
+                self.handle_timeout()  # Also revert on interrupt
 
         except Exception as e:
             self.log(f"Error sending question: {e}")
+            # If there's an error, revert the question back to unanswered
+            self.update_question_status(question, "unanswered")
 
     def run_batch(self, count=10):
         """Run batch of questions"""
