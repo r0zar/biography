@@ -46,12 +46,8 @@ CONTEXT LOADING:
 TASK:
 1. Identify the single most important priority from the ADHD tasks file (morning discipline, job performance, etc.)
 2. Scan the relevant topic files for existing unanswered questions (❌) related to that priority
-3. If suitable question exists, select it for presentation
-4. If no suitable question exists, create a new essential question that:
-   - Addresses the specific ADHD task priority identified
-   - Can be answered with actionable yes/no or specific options
-   - Helps overcome the current completion rate bottlenecks (17% job apps, 29% morning discipline)
-   - Add this new question to the most appropriate topic file with ❌ status
+3. After identifying the highest priority question, consider the best way to present it to the user
+4. Format the question text properly for shell execution (escape quotes, etc.)
 5. Present the selected/created question using the most appropriate dialog interface
 
 DIALOG PRESENTATION:
