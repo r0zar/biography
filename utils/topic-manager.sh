@@ -105,14 +105,6 @@ OBSIDIAN INTEGRATION FEATURES:
 - **Hierarchical tags**: Use tag hierarchies like #career/interview #productivity/focus
 - **Metadata**: Include topic creation dates, last updated, question counts
 
-ANALYTICS & INTELLIGENCE:
-- Track question counts, completion rates, recent activity
-- Identify trending themes and suggest topic improvements
-- Generate topic summaries highlighting key insights
-- Suggest topic mergers for similar/overlapping areas
-- Recommend topic splits if single topic becomes too broad
-- Cross-link related questions and topics intelligently
-
 TOPIC ORGANIZATION PRINCIPLES:
 - Prefer routing to existing relevant topics over creating new ones
 - Create new topics only for genuinely distinct areas

@@ -9,7 +9,7 @@ if [[ -n "$BIOGRAPHY_CONFIG_LOADED" ]]; then
     return 0 2>/dev/null || exit 0
 fi
 
-# Detect script directory (utils is in scripts, so go up one level)
+# Detect script directory (utils is in biography root, so go up one level)
 SCRIPTS_DIR="${SCRIPTS_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 # Core directories - can be overridden with environment variables
