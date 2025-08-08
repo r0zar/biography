@@ -175,9 +175,40 @@ Your system now has:
 - ✅ Context data for intelligent question generation
 - ✅ Obsidian vault with cross-linked topics
 
+**💡 Pro Tip**: After initial setup, use `claude` in your biography directory for the best experience. Ask Claude to help with any operations like *"consolidate my topics"*, *"generate new questions"*, or *"update my biography with information from this document"*.
+
 ## Usage
 
-### Manual Execution
+### 🤖 Recommended: Claude-Powered Interaction
+
+**The easiest and most powerful way to work with this system is through Claude Code.** Instead of calling scripts directly, let Claude handle the complexity:
+
+```bash
+# Open Claude Code in your biography directory
+cd $HOME/biography
+claude
+
+# Then ask Claude to help with any system operations:
+```
+
+**Example Claude interactions:**
+- *"Generate some biography questions for me"* → Claude runs appropriate scripts and presents questions
+- *"Consolidate the Personal Effectiveness topic"* → Claude runs topic-manager consolidation  
+- *"Update my biography with information from this document: [paste text]"* → Claude analyzes and updates relevant topic files
+- *"Create a new Health and Wellness topic with some initial questions"* → Claude uses topic-manager to create and populate
+- *"Run my daily task prioritizer"* → Claude executes and shows results
+- *"Help me set up my cron jobs"* → Claude configures automation schedule
+
+**Why Claude interaction is better:**
+- **Intelligent execution**: Claude chooses the right scripts and parameters
+- **Direct file editing**: Claude can update your Obsidian markdown files with rich data
+- **Context awareness**: Claude understands your system state and suggests next actions
+- **Error handling**: Claude can diagnose and fix issues automatically
+- **Batch operations**: Claude can combine multiple script calls into workflows
+
+### Manual Script Execution (Advanced)
+
+If you prefer direct script interaction:
 
 ```bash
 # Generate essentialist-prioritized biography questions
@@ -228,11 +259,26 @@ The Claude-powered topic manager provides intelligent organization:
 - **Smart Consolidation**: Merges redundant questions into comprehensive insights
 - **Analytics**: Completion rates, activity tracking, relationship mapping
 
-### Interactive Components
+### 🔄 Claude-Enhanced Workflows
 
-- **Biography Questions**: Appear as notifications every 30 minutes
-- **Progress Questions**: Triggered after weekly Covey reviews
-- **Task Management**: Checkbox-based progress tracking in generated files
+**Data Integration Workflows:**
+- **Document Analysis**: *"Extract key insights from this resume/journal/document and update my biography topics"*
+- **Goal Setting**: *"Help me create SMART goals based on my current biography data"*  
+- **Progress Review**: *"Analyze my recent Q&As and suggest areas for deeper exploration"*
+- **Life Event Processing**: *"I just had a major life change - help me update relevant topics and generate new questions"*
+
+**Maintenance Workflows:**
+- **System Optimization**: *"Review my topic files and suggest consolidations or reorganizations"*
+- **Question Generation**: *"Generate 5 targeted questions based on my biggest challenges right now"*
+- **Data Export**: *"Create a comprehensive life summary from all my biography data"*
+- **Schedule Management**: *"Help me optimize my cron schedule based on my current priorities"*
+
+### Traditional Interactive Components
+
+- **Biography Questions**: Appear as notifications every 30 minutes (automated)
+- **Progress Questions**: Triggered after weekly Covey reviews (automated)
+- **Task Management**: Checkbox-based progress tracking in generated files (automated)
+- **Claude Sessions**: Interactive analysis and file updates (manual via `claude` command)
 
 ## Output Files
 
@@ -307,11 +353,31 @@ The system follows a Claude-powered modular architecture:
 - **Task Prioritization**: ADHD-friendly task lists aligned with current priorities
 
 ### Key Design Principles
-- **Intelligence over Hardcoding**: Claude handles complex decision-making
-- **Essentialism**: Focus on vital few priorities rather than reactive urgency
+- **Claude-First Design**: Claude Code is the primary interface - scripts are tools for Claude to use
+- **Intelligence over Hardcoding**: Claude handles complex decision-making and file editing
+- **Essentialism**: Focus on vital few priorities rather than reactive urgency  
 - **Context Awareness**: All components share centralized context and configuration
 - **Obsidian Integration**: Rich cross-linking, tagging, and metadata management
 - **Progressive Enhancement**: System becomes smarter as it learns more about you
+- **Hybrid Automation**: Combines automated cron jobs with interactive Claude sessions
+
+### Interaction Paradigms
+
+**🤖 Claude-Powered (Recommended)**
+- Natural language requests for any system operation
+- Intelligent script selection and parameter optimization
+- Direct markdown file editing with rich context analysis
+- Multi-step workflows combining automation with human insight
+
+**⚙️ Script-Based (Traditional)**  
+- Direct script execution for specific operations
+- Automated cron-based question generation and analysis
+- Structured logging and notification-based interaction
+
+**🔄 Hybrid Approach (Most Powerful)**
+- Automated background processing (cron jobs)
+- Claude-enhanced interaction for complex operations
+- Manual script execution for debugging and customization
 
 ## Troubleshooting
 
