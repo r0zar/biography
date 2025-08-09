@@ -4,22 +4,18 @@
 # Creates initial questions for new users across key life areas
 # Provides foundation context for the biography system
 
-# Auto-load configuration
+# Auto-load configuration and logging
 source "$(dirname "$0")/../utils/auto-config.sh"
+source "$(dirname "$0")/../utils/logger.sh"
 
 # Set environment for proper operations
 export DISPLAY="${DISPLAY:-:1}"
 export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}"
 
-# Log function
-log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S'): $1" >> "$BIOGRAPHY_LOG"
-}
-
 echo "🚀 Biography System Bootstrap - Initial Question Generation"
 echo "Creating foundation questions across key life areas..."
 
-log "Starting bootstrap question generation for new user"
+log_start "Bootstrap question generation for new user"
 
 # Comprehensive bootstrap prompt for new users
 BOOTSTRAP_PROMPT="BIOGRAPHY SYSTEM BOOTSTRAP - Generate Initial Foundation Questions
@@ -69,8 +65,14 @@ FOR EACH QUESTION:
 1. Generate the question text
 2. Use topic-manager.sh route-question to determine optimal topic
 3. Add question to topic using topic-manager.sh add-question
-4. Present question using available dialog interface (notify-send preferred)
+4. Present question using question-manager.sh ask with appropriate context flags
 5. Wait for user response before proceeding to next question
+
+QUESTION PRESENTATION:
+Use the unified question-manager.sh system for consistent question presentation:
+- For simple questions: ./utils/question-manager.sh -b ask "Question text"
+- For context-aware questions: ./utils/question-manager.sh -b7m ask "Question text"
+- The question-manager handles dialog presentation, response capture, and topic integration automatically
 
 PACING: Present questions one at a time with brief pauses between. This is an initial session to build foundation context, not an interrogation.
 
@@ -82,18 +84,24 @@ GOAL: After this session, the system should have:
 
 Begin with the first question from Career & Professional Life area."
 
-log "Executing bootstrap question generation"
+log_info "Executing bootstrap question generation"
 "$SCRIPTS_DIR/utils/claude-wrapper.sh" "$BOOTSTRAP_PROMPT"
 
-log "Bootstrap question generation completed"
+log_end "Bootstrap question generation"
 
 echo ""
 echo "✅ Initial questions generated and presented!"
 echo ""
 echo "Next steps:"
-echo "1. Answer the questions that were presented via notifications"
+echo "1. Answer the questions that were presented via the question-manager system"
 echo "2. Check your Obsidian vault - topic files have been created with your questions"
 echo "3. Once you've answered 5-10 questions, run: ./setup/mission-statement-builder.sh"
 echo "4. After creating your mission statement, the system is ready for automation"
+echo ""
+echo "💡 Future question management:"
+echo "• Use: ./utils/question-manager.sh pop                    # Get most essential question"
+echo "• Use: ./utils/question-manager.sh -b7m ask \"Question?\"   # Ask with full context"
+echo "• Use: ./utils/question-manager.sh -rb generate --challenges 5  # Generate new questions"
+echo "• Use: ./utils/question-manager.sh help                   # Get detailed usage help"
 echo ""
 echo "The system will learn from your answers and ask increasingly relevant questions."

@@ -5,15 +5,11 @@
 
 # Auto-load configuration
 source "$(dirname "$0")/auto-config.sh"
+source "$(dirname "$0")/logger.sh"
 
 # Set environment for proper operations
 export DISPLAY="${DISPLAY:-:1}"
 export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}"
-
-# Log function
-log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S'): $1" >> "$TOPIC_MANAGER_LOG"
-}
 
 # Main intelligent topic management function
 main() {
@@ -33,7 +29,7 @@ main() {
         exit 1
     fi
 
-    log "Starting intelligent topic management: $command $arg1"
+    log_start "Intelligent topic management: $command $arg1"
 
     # Comprehensive Claude prompt for intelligent topic management
     TOPIC_MANAGEMENT_PROMPT="Intelligent topic management task: $command
@@ -115,10 +111,10 @@ TOPIC ORGANIZATION PRINCIPLES:
 
 Execute the command and provide clear, actionable results."
 
-    log "Executing intelligent topic management with Claude"
+    log_info "Executing intelligent topic management with Claude"
     "$SCRIPTS_DIR/utils/claude-wrapper.sh" "$TOPIC_MANAGEMENT_PROMPT"
     
-    log "Topic management completed: $command"
+    log_end "Topic management: $command"
 }
 
 # Execute main function with all arguments

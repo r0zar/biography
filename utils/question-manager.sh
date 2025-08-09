@@ -6,6 +6,7 @@
 
 # Auto-load configuration
 source "$(dirname "$0")/auto-config.sh"
+source "$(dirname "$0")/logger.sh"
 
 # Set GUI environment variables for proper dialog display
 export DISPLAY="${DISPLAY:-:1}"
@@ -31,10 +32,8 @@ VERBOSE=false
 QUIET=false
 DRY_RUN=false
 
-# Log function
-log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S'): $1" >> "$LOGS_DIR/question-manager.log"
-}
+# Legacy log functions are now provided by logger.sh
+
 
 # Show usage information
 show_usage() {
@@ -65,7 +64,7 @@ show_usage() {
     echo "  help [command]                        Show help information"
     echo ""
     echo "Examples:"
-    echo "  $0 pop                               # Default: -b7a"
+    echo "  $0 pop                               # Default: -b7m"
     echo "  $0 -rb7 ask \"Market trends?\"         # Research + context"
     echo "  $0 -rc ask \"Follow-up?\"             # Continue with research"
     echo "  $0 -rA generate --challenges 5       # Research + all context"
@@ -187,10 +186,10 @@ apply_smart_defaults() {
     if [[ "$has_context_flags" == "false" ]]; then
         case "$command" in
             pop)
-                # Biography + 7habits + adhd tasks for essential question finding
+                # Biography + 7habits + mission for essential question finding
                 LOAD_BIOGRAPHY=true
                 LOAD_7HABITS=true
-                LOAD_ADHD_TASKS=true
+                LOAD_MISSION=true
                 ;;
             ask)
                 # Biography for routing context
@@ -223,7 +222,7 @@ handle_pop() {
         esac
     done
     
-    log "Starting essentialist question prioritization session"
+    log_start "Essentialist question prioritization session"
     [[ "$VERBOSE" == "true" ]] && echo "📖 Essentialist Biography Q&A - Finding the most essential question"
     
     local context=$(build_context_prompt)
@@ -247,9 +246,8 @@ OBJECTIVE:
 FOCUS AREA: ${focus_area:-Auto-detect from context}
 
 DIALOG PRESENTATION:
-- PREFERRED: Use notify-send with -A parameters for interactive responses
-- FALLBACK: Use zenity or other dialog tools for complex interactions
-- Handle response and save via topic-manager.sh routing
+- Use notify-send with -A parameters for short, quick responses
+- If not available, use other dialog tools available on the system
 
 TOPIC INTEGRATION:
 After getting response, use topic-manager to save:
@@ -262,7 +260,7 @@ After getting response, use topic-manager to save:
         return
     fi
     
-    log "Executing essentialist prioritization with Claude"
+    log_info "Executing essentialist prioritization with Claude"
     
     if [[ "$CONTINUE" == "true" ]]; then
         "$SCRIPTS_DIR/utils/claude-wrapper.sh" --continue "$ESSENTIALIST_PROMPT"
@@ -270,7 +268,7 @@ After getting response, use topic-manager to save:
         "$SCRIPTS_DIR/utils/claude-wrapper.sh" "$ESSENTIALIST_PROMPT"
     fi
     
-    log "Essentialist question prioritization completed"
+    log_end "Essentialist question prioritization"
 }
 
 # Handle ask command - present question(s)
@@ -305,7 +303,7 @@ handle_ask() {
         exit 1
     fi
     
-    log "Starting ask session: ${question:-from file $from_file}"
+    log_start "Ask session: ${question:-from file $from_file}"
     
     local context=$(build_context_prompt)
     
@@ -346,7 +344,7 @@ Use topic-manager for each question:
             return
         fi
         
-        log "Processing questions from file: $from_file"
+        log_info "Processing questions from file: $from_file"
     else
         # Single question
         local ASK_PROMPT="${context}
@@ -372,7 +370,7 @@ After getting response:
             return
         fi
         
-        log "Presenting single question: $question"
+        log_info "Presenting single question: $question"
     fi
     
     if [[ "$CONTINUE" == "true" ]]; then
@@ -381,7 +379,7 @@ After getting response:
         "$SCRIPTS_DIR/utils/claude-wrapper.sh" "$ASK_PROMPT"
     fi
     
-    log "Ask session completed"
+    log_end "Ask session"
 }
 
 # Handle generate command - create new questions
@@ -413,7 +411,7 @@ handle_generate() {
         esac
     done
     
-    log "Starting question generation: $target (count: $count)"
+    log_start "Question generation: $target (count: $count)"
     
     local context=$(build_context_prompt)
     
@@ -453,7 +451,7 @@ For each generated question:
         return
     fi
     
-    log "Executing question generation with Claude"
+    log_info "Executing question generation with Claude"
     
     if [[ "$CONTINUE" == "true" ]]; then
         "$SCRIPTS_DIR/utils/claude-wrapper.sh" --continue "$GENERATE_PROMPT"
@@ -461,7 +459,7 @@ For each generated question:
         "$SCRIPTS_DIR/utils/claude-wrapper.sh" "$GENERATE_PROMPT"
     fi
     
-    log "Question generation completed"
+    log_end "Question generation"
 }
 
 # Handle help command
@@ -522,7 +520,7 @@ EXAMPLES:
   question-manager.sh pop --focus career    # Career-focused
 
 DEFAULT CONTEXT:
-  Without flags, pop uses -b7a (biography + 7habits + adhd-tasks)
+  Without flags, pop uses -b7m (biography + 7habits + mission)
   for optimal essential question identification.
 
 EOF

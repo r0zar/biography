@@ -1,21 +1,17 @@
 #!/bin/bash
 
-# Covey Weekly Progress Review Script
-# Generates progress assessment and next week focus without conflicting with monthly plans
+# Weekly Planning Generator
+# Creates next week focus and planning based on weekly retrospective and Covey analysis
 
-# Auto-load configuration
+# Auto-load configuration and logging
 source "$(dirname "$0")/../utils/auto-config.sh"
+source "$(dirname "$0")/../utils/logger.sh"
 
-# Log function
-log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S'): $1" >> "$COVEY_LOG"
-}
-
-log "Starting Covey weekly progress review"
+log_start "Weekly planning analysis"
 
 # Skip if it's the 1st of the month (full analysis day)
 if [ $(date +%d) -eq 01 ]; then
-    log "Skipping weekly review - monthly comprehensive analysis runs today"
+    log_info "Skipping weekly planning - monthly comprehensive analysis runs today"
     exit 0
 fi
 
@@ -25,25 +21,26 @@ DATE_READABLE=$(date '+%B %d, %Y at %I:%M %p')
 WEEK_OF=$(date '+%B %d, %Y')
 
 # Check if current month's Covey analysis exists
-CURRENT_MONTH_ANALYSIS="$VAULT_DIR/Covey-Life-Analysis.md"
+CURRENT_MONTH_ANALYSIS="$VAULT_DIR/Monthly Planning.md"
 if [ ! -f "$CURRENT_MONTH_ANALYSIS" ]; then
-    log "No current month Covey analysis found - cannot perform weekly review"
+    log_warn "No current month Covey analysis found - cannot perform weekly review"
     exit 1
 fi
 
 # Get question count and progress metrics
-log "Analyzing current progress metrics"
-QUESTION_COUNT=$("$SCRIPTS_DIR/utils/extract-qa-data.py" count)
+log_info "Analyzing current progress metrics"
+# Get question count from topic files
+QUESTION_COUNT=$(find "$VAULT_DIR/Topics" -name "*.md" -exec grep -c "✅.*answered $(date '+%Y-%m-%d')" {} + | awk '{sum+=$1} END {print sum+0}')
 
 # Parse checkbox completion from ADHD tasks and Covey analysis
-ADHD_TASKS_FILE="$VAULT_DIR/ADHD-Tasks.md"
+DAILY_PLANNING_FILE="$VAULT_DIR/Daily Planning.md"
 PRIORITY_FILE="$VAULT_DIR/Priority-Management.md"
 CHECKBOX_COMPLETED=0
 CHECKBOX_TOTAL=0
 
-if [ -f "$ADHD_TASKS_FILE" ]; then
-    CHECKBOX_COMPLETED=$(grep -c "^- \[x\]" "$ADHD_TASKS_FILE" 2>/dev/null | head -1 || echo "0")
-    CHECKBOX_PENDING=$(grep -c "^- \[ \]" "$ADHD_TASKS_FILE" 2>/dev/null | head -1 || echo "0")
+if [ -f "$DAILY_PLANNING_FILE" ]; then
+    CHECKBOX_COMPLETED=$(grep -c "^- \[x\]" "$DAILY_PLANNING_FILE" 2>/dev/null | head -1 || echo "0")
+    CHECKBOX_PENDING=$(grep -c "^- \[ \]" "$DAILY_PLANNING_FILE" 2>/dev/null | head -1 || echo "0")
     CHECKBOX_TOTAL=$((CHECKBOX_COMPLETED + CHECKBOX_PENDING))
 fi
 
@@ -69,16 +66,16 @@ if [ "$CHECKBOX_TOTAL" -gt 0 ] 2>/dev/null; then
     COMPLETION_RATE=$((CHECKBOX_COMPLETED * 100 / CHECKBOX_TOTAL))
 fi
 
-log "Found $CHECKBOX_COMPLETED/$CHECKBOX_TOTAL tasks completed ($COMPLETION_RATE%)"
+log_info "Found $CHECKBOX_COMPLETED/$CHECKBOX_TOTAL tasks completed ($COMPLETION_RATE%)"
 
 # Archive existing weekly review if it exists
-WEEKLY_REVIEW_FILE="$VAULT_DIR/Weekly-Covey-Review.md"
+WEEKLY_PLANNING_FILE="$VAULT_DIR/Weekly Planning.md"
 ARCHIVED_DIR="$VAULT_DIR/Archived"
 
-if [ -f "$WEEKLY_REVIEW_FILE" ]; then
+if [ -f "$WEEKLY_PLANNING_FILE" ]; then
     mkdir -p "$ARCHIVED_DIR"
-    mv "$WEEKLY_REVIEW_FILE" "$ARCHIVED_DIR/Weekly-Covey-Review-${TIMESTAMP}.md"
-    log "Archived previous weekly review to $ARCHIVED_DIR/Weekly-Covey-Review-${TIMESTAMP}.md"
+    mv "$WEEKLY_PLANNING_FILE" "$ARCHIVED_DIR/Weekly Planning-${TIMESTAMP}.md"
+    log_info "Archived previous weekly planning to $ARCHIVED_DIR/Weekly Planning-${TIMESTAMP}.md"
 fi
 
 # ==============================================================================
@@ -86,7 +83,7 @@ fi
 # ==============================================================================
 
 # Step 1: Load all data and generate pre-review questions
-log "Step 1: Loading data and generating pre-review questions"
+log_info "Step 1: Loading data and generating pre-review questions"
 cat > /tmp/weekly_flow_initial.txt << EOF
 COVEY WEEKLY REVIEW MULTI-STEP PROCESS - STEP 1: PRE-REVIEW QUESTIONS
 
@@ -94,7 +91,7 @@ I'm starting a multi-step weekly review process that will use --continue to main
 
 **FIRST, LOAD ALL DATA SOURCES:**
 - Current month's comprehensive analysis: $CURRENT_MONTH_ANALYSIS
-- Current ADHD tasks: $ADHD_TASKS_FILE 
+- Current Daily Planning: $DAILY_PLANNING_FILE 
 - Previous week's Priority Management file: $PRIORITY_FILE (if exists)
 - Recent daily summary files in $VAULT_DIR (files named 2025-*.md from this week)
 - All Topics/*.md files for context
@@ -152,20 +149,20 @@ EOF
 
 # Execute initial step and capture output
 CLAUDE_OUTPUT="/tmp/claude_pre_review_output_$(date +%s).txt"
-log "Loading all data and generating pre-review questions"
+log_info "Loading all data and generating pre-review questions"
 "$SCRIPTS_DIR/utils/claude-wrapper.sh" < /tmp/weekly_flow_initial.txt > "$CLAUDE_OUTPUT"
 
 # Clean up temp file
 rm -f /tmp/weekly_flow_initial.txt
 
 # Step 2: Extract and present pre-review questions
-log "Step 2: Extracting and presenting pre-review questions"
+log_info "Step 2: Extracting and presenting pre-review questions"
 if [ -f "$CLAUDE_OUTPUT" ] && [ -s "$CLAUDE_OUTPUT" ]; then
-    log "Claude output captured, extracting questions..."
+    log_info "Claude output captured, extracting questions..."
     
     # Check if questions were generated
     QUESTION_COUNT=$(grep -c "^[0-9]\+\." "$CLAUDE_OUTPUT" | head -1 || echo 0)
-    log "Found $QUESTION_COUNT pre-review questions in Claude output"
+    log_info "Found $QUESTION_COUNT pre-review questions in Claude output"
     
     if [ "$QUESTION_COUNT" -gt 0 ]; then
         echo ""
@@ -174,79 +171,86 @@ if [ -f "$CLAUDE_OUTPUT" ] && [ -s "$CLAUDE_OUTPUT" ]; then
         echo ""
         
         # Present pre-review questions and WAIT for completion
-        log "Presenting $QUESTION_COUNT pre-review questions to user - PAUSING for responses"
-        "$SCRIPTS_DIR/utils/pre-review-questioner.sh" "$CLAUDE_OUTPUT"
+        log_info "Presenting $QUESTION_COUNT pre-review questions to user - PAUSING for responses"
+        # Extract questions from Claude output and present them using question-manager
+        echo "📋 PRE-REVIEW QUESTIONS FROM ANALYSIS:"
+        grep "^[0-9]\\+\\." "$CLAUDE_OUTPUT" | head -5
+        echo ""
+        echo "ℹ️  Review these insights before continuing with weekly planning"
+        read -p "Press Enter to continue with weekly planning generation..."
         
         echo ""
         echo "✅ Pre-review questions completed"
         echo "▶️  Continuing with weekly review generation..."
         echo ""
         
-        log "Pre-review questions completed, continuing with weekly review"
+        log_info "Pre-review questions completed, continuing with weekly review"
     else
-        log "No pre-review questions found in Claude output, continuing without questions"
+        log_warn "No pre-review questions found in Claude output, continuing without questions"
         echo "ℹ️  No pre-review questions needed - proceeding to weekly review"
     fi
 else
-    log "No Claude output captured, skipping pre-review questions"
+    log_warn "No Claude output captured, skipping pre-review questions"
 fi
 
 # Clean up Claude output file
 rm -f "$CLAUDE_OUTPUT"
 
 # Step 3: Generate weekly review with all context
-log "Step 3: Generating weekly Covey review with full context"
+log_info "Step 3: Generating weekly Covey review with full context"
 cat > /tmp/weekly_flow_review.txt << EOF
-STEP 2: GENERATE WEEKLY COVEY REVIEW
+STEP 2: GREG MCKEOWN ESSENTIALIST WEEKLY PLANNING
 
-Now create the comprehensive weekly review using all loaded data and any pre-review question insights.
+Channel Greg McKeown's disciplined pursuit of less to plan next week around the VITAL FEW.
 
-Create 'Weekly-Covey-Review.md' in $VAULT_DIR with:
+Read the Greg McKeown prompt at: $PROMPTS_DIR/greg-mckeown-essentialist.md
 
-**HEADER INFORMATION:**
-- Review Date: ${DATE_READABLE}
-- Week of: ${WEEK_OF}
-- Current Task Completion Rate: ${COMPLETION_RATE}% (${CHECKBOX_COMPLETED}/${CHECKBOX_TOTAL})
-- Data Snapshot: Based on $QUESTION_COUNT total biography responses
+Create 'Weekly Planning.md' in $VAULT_DIR using Essentialism principles:
 
-**WEEKLY REVIEW SECTIONS:**
+**THE ESSENTIAL QUESTION:** What is the ONE thing that, if accomplished this week, would make everything else easier or irrelevant?
 
-### Progress Assessment
-- Brief review of key accomplishments this week
-- Areas where progress was made toward monthly goals
-- Patterns observed in daily summaries and task completion
-- Integration of any pre-review question insights
+**MCKEOWN'S 90% RULE FOR PLANNING:**
+- Review Date: ${DATE_READABLE} | Week of: ${WEEK_OF}
+- Current Completion: ${COMPLETION_RATE}% (${CHECKBOX_COMPLETED}/${CHECKBOX_TOTAL})
+- Context: $QUESTION_COUNT biography insights
 
-### Challenge Areas Identified  
-- Tasks or areas with low completion rates (specific data from completion analysis)
-- Obstacles that emerged this week
-- Gaps between intentions and actions
+**ESSENTIAL PLANNING FRAMEWORK:**
 
-### Next Week Focus
-- 3 specific actions for the coming week (vital few approach)
-- Priorities based on monthly plan + this week's learnings
-- Adjustments to approach based on what's working/not working
+### The Vital Few (Maximum 3)
+- Apply the 90% rule: Only commitments that score 90+ deserve space
+- What are the 2-3 things that will create the highest impact?
+- Everything else gets eliminated or delegated
 
-**STYLE NOTES:**
-- Keep it concise (2-3 pages max vs comprehensive monthly analysis)
-- Focus on actionable insights for next week
-- Reference specific items from monthly plan
-- Use Covey principles but don't repeat full framework
-- Include internal links to relevant topics
+### The One Essential Goal
+- The single most important outcome for this week
+- The thing that, if achieved, makes the biggest difference to your mission
+- Must align with your deepest values and current priority bottleneck
 
-This is a progress review informed by comprehensive data loading.
+### Elimination Strategy  
+- What will you say NO to this week to protect the essential?
+- Which "good" commitments will you eliminate for "great" ones?
+- How will you create buffer and space around your vital few?
+
+### Execution Design
+- Minimum viable approach to maximum impact
+- Time blocks for the essential (not the urgent)
+- Systems to protect focus and eliminate distractions
+
+**ESSENTIALISM VOICE:** Write with Greg McKeown's clarity and conviction. Less planning, more deciding. Focus on disciplined choices that create space for breakthrough.
+
+Remember: The goal isn't to do more things - it's to do the right things with excellence.
 EOF
 
 # Continue with weekly review generation
-log "Generating weekly review with continued context"
+log_info "Generating weekly planning with continued context"
 "$SCRIPTS_DIR/utils/claude-wrapper.sh" --continue < /tmp/weekly_flow_review.txt
 
 # Clean up temp file
 rm -f /tmp/weekly_flow_review.txt
 
-# Trigger follow-up activities if the review was generated successfully
-if [ -f "$WEEKLY_REVIEW_FILE" ]; then
-    log "Weekly review generated successfully, triggering follow-up activities"
+# Trigger follow-up activities if the planning was generated successfully
+if [ -f "$WEEKLY_PLANNING_FILE" ]; then
+    log_info "Weekly planning generated successfully, triggering follow-up activities"
     
     # Small delay to ensure file is fully written
     sleep 2
@@ -258,11 +262,11 @@ if [ -f "$WEEKLY_REVIEW_FILE" ]; then
     if [ -f "$PRIORITY_FILE" ]; then
         mkdir -p "$ARCHIVED_DIR"
         mv "$PRIORITY_FILE" "$ARCHIVED_DIR/Priority-Management-${TIMESTAMP}.md"
-        log "Archived previous priority file to $ARCHIVED_DIR/Priority-Management-${TIMESTAMP}.md"
+        log_info "Archived previous priority file to $ARCHIVED_DIR/Priority-Management-${TIMESTAMP}.md"
     fi
     
     # Step 4: Generate priorities file using --continue to maintain context
-    log "Step 4: Generating priority management file using continued Claude context"
+    log_info "Step 4: Generating priority management file using continued Claude context"
     
     cat > /tmp/priority_continuation_prompt.txt << EOF
 STEP 3: GENERATE PRIORITY MANAGEMENT FILE
@@ -306,7 +310,7 @@ EOF
     rm -f /tmp/priority_continuation_prompt.txt
     
     # Step 5: Add follow-up questions to topic files (no user interaction needed)
-    log "Step 5: Adding follow-up questions to relevant topic files"
+    log_info "Step 5: Adding follow-up questions to relevant topic files"
     
     cat > /tmp/topic_questions_prompt.txt << EOF
 STEP 4: ADD FOLLOW-UP QUESTIONS TO TOPIC FILES
@@ -354,17 +358,21 @@ EOF
     
     # Extract and execute topic-manager commands from Claude output
     if [ -f "$CLAUDE_TOPIC_OUTPUT" ] && [ -s "$CLAUDE_TOPIC_OUTPUT" ]; then
-        log "Extracting and executing topic-manager commands"
-        "$SCRIPTS_DIR/utils/command-extractor.sh" "$CLAUDE_TOPIC_OUTPUT"
+        log_info "Extracting and executing topic-manager commands"
+        # Extract lines that contain topic-manager.sh commands
+        grep "$SCRIPTS_DIR/utils/topic-manager.sh" "$CLAUDE_TOPIC_OUTPUT" | while read -r cmd; do
+            log_info "Executing: $cmd"
+            eval "$cmd"
+        done
     else
-        log "No Claude output captured for command extraction"
+        log_warn "No Claude output captured for command extraction"
     fi
     
     # Clean up temp files
     rm -f /tmp/topic_questions_prompt.txt
     rm -f "$CLAUDE_TOPIC_OUTPUT"
     
-    log "All follow-up activities completed successfully"
+    log_info "All follow-up activities completed successfully"
 fi
 
-log "Weekly Covey progress review and priority generation completed"
+log_end "Weekly Covey progress review and priority generation"

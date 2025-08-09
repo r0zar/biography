@@ -11,11 +11,12 @@ A comprehensive personal development and biography collection system that uses C
 - **Topic Consolidation**: Intelligent merging of similar Q&As into information-rich insights
 - **Narrative Generation**: Converts Q&A data into coherent life stories
 
-### 📊 Covey Analysis System
-- **Monthly Comprehensive Analysis**: Full 7 Habits assessment and 4-week development plan
-- **Weekly Progress Reviews**: Lightweight check-ins with targeted improvement questions
-- **Progress Tracking**: Checkbox parsing and completion rate monitoring
-- **ADHD Task Integration**: Tasks aligned with current priority areas and completion rates
+### 📊 Automated Reporting Cycle
+- **Daily Retrospectives**: End-of-day analysis with optional Captain Picard narrative style (auto-archives previous day)
+- **Daily Planning**: Morning task prioritization based on retrospective insights  
+- **Weekly Retrospectives**: Sunday progress analysis and pattern identification
+- **Weekly Planning**: Forward-looking goal setting and priority alignment
+- **Monthly Planning**: Comprehensive Covey 7 Habits analysis and 30-day effectiveness plans
 
 ### 🧠 Intelligent Topic Management
 - **Claude-Powered Routing**: Smart question placement across topic areas
@@ -23,42 +24,44 @@ A comprehensive personal development and biography collection system that uses C
 - **Smart Consolidation**: Merges redundant Q&As into comprehensive, actionable insights
 - **Metadata Management**: Analytics, completion tracking, and relationship mapping
 
-### ✅ Task Management
-- **Essentialist Task Lists**: Focus on vital few priorities with time-bounded actions
-- **Morning Discipline**: Priority-setting before reactive message checking
-- **Integration with Analysis**: Tasks aligned with Covey insights and biography goals
+### 🎯 Question Management System
+- **Unified Interface**: Single `question-manager.sh` with Unix-style stackable flags (`-rb7m`)
+- **Smart Context Loading**: Intelligent defaults reduce unnecessary data loading  
+- **Essentialist Prioritization**: Focus on vital few questions rather than reactive urgency
+- **Multiple Input Methods**: Interactive prompts, file-based batches, or direct command-line
 
-### 📈 Daily Summaries
-- **Automated Reports**: End-of-day summaries for reflection and planning
-- **Pattern Recognition**: Identifies trends and insights from collected data
-- **Structured Logging**: Consistent format for historical analysis
+### ⚡ Two-Phase Analysis Cycle
+- **Phase 1 - Retrospective (11:00-11:30 PM)**: Analyze completed day/week patterns
+- **Phase 2 - Planning (12:00-1:00 AM)**: Create forward-looking goals using retrospective insights
+- **Optimal Timing**: Late-night analysis informs early-morning planning without daily interruption
+
+### 🔧 System Infrastructure
+- **Centralized Logging**: Consistent timestamped logging across all components with levels (INFO/WARN/ERROR)
+- **Automatic Configuration**: Self-configuring paths and environment detection
+- **Pure Bash Implementation**: Zero Python dependencies for maximum portability
+- **Modular Architecture**: Clean separation between scheduled tasks and shared utilities
 
 ## Directory Structure
 
 ```
 biography/
-├── tasks/                     # Cron job scripts
-│   ├── covey-analysis-simple.sh    # Monthly comprehensive Covey analysis
-│   ├── covey-weekly-review.sh      # Weekly progress reviews  
-│   ├── adhd-task-prioritizer.sh    # Daily task list generation
-│   └── daily-summary-wrapper.sh    # End-of-day summary creation
+├── reports/                   # Automated reporting scripts  
+│   ├── monthly-planning.sh         # Monthly comprehensive Covey analysis and planning
+│   ├── weekly-retro.sh             # Weekly progress retrospectives
+│   ├── weekly-planning.sh          # Weekly planning and goal setting  
+│   ├── daily-planning.sh           # Daily task list generation and planning
+│   └── daily-retro.sh              # Daily retrospective and topic organization
 ├── utils/                     # Shared utilities and libraries
 │   ├── auto-config.sh              # Centralized configuration management
-│   ├── auto_config.py              # Python configuration module
 │   ├── claude-wrapper.sh           # Claude AI integration wrapper
+│   ├── logger.sh                   # Centralized logging utility with levels
 │   ├── topic-manager.sh            # Claude-powered topic routing & consolidation
-│   ├── question-manager.sh         # Unified question management with context control
-│   ├── generate-questions.sh       # Intelligent question generation
-│   ├── extract-qa-data.py          # Q&A data parsing utilities
-│   ├── extract-new-topics.sh       # Topic extraction from analysis
-│   ├── daily-summary.py            # Daily summary generation
-│   └── generate-narrative.sh       # Narrative creation from Q&A data
-├── templates/                 # System templates and formats
-│   ├── Priority-Management.md       # Essentialism framework template
-│   └── question-generation-format.md # Question formatting standards
-├── prompts/                   # AI agent instructions
-│   ├── stephen-covey-instructions.md     # Covey analysis agent prompt
-│   └── greg-mckeown-essentialist-instructions.md # Essentialism agent prompt
+│   └── question-manager.sh         # Unified question management with context control
+├── prompts/                   # AI agent instructions and templates
+│   ├── stephen-covey.md             # Covey analysis agent prompt
+│   ├── greg-mckeown-essentialist.md # Essentialism agent prompt
+│   ├── picard-daily-summary.md      # Captain Picard narrative style
+│   └── Priority-Management.md       # Essentialism framework template
 └── setup/                     # Getting started scripts (created during setup)
     ├── bootstrap-questions.sh       # Initial question generation
     ├── mission-statement-builder.sh # Guided mission creation
@@ -75,10 +78,9 @@ cd $HOME && git clone git@github.com:r0zar/biography.git biography && cd biograp
 ```
 
 ### Prerequisites
-- **Python 3.6+** with packages: `gi` (GTK notifications)
 - **Claude AI CLI** - [Installation Guide](https://docs.anthropic.com/en/docs/claude-code)
 - **Linux/Unix environment** with cron support
-- **Display server** for GTK notifications
+- **Display server** for zenity dialog notifications
 - **Obsidian** (recommended) - Scripts generate markdown with Obsidian-style links `[[Topic]]` and tags `#covey #effectiveness`. Works with any markdown editor but optimized for Obsidian's linking system.
 
 ### Manual Installation
@@ -112,23 +114,49 @@ Configuration is automatically loaded by all scripts through `utils/auto-config.
 
 ### Automated Cron Schedule
 
-The install script automatically configures cron jobs. Manual configuration:
+The install script automatically configures cron jobs with optimized timing - retrospectives run first, then planning uses those insights. Manual configuration:
 
 ```bash
 # Essential questions every 30 minutes (essentialist prioritization)
 */30 * * * * $HOME/biography/utils/question-manager.sh pop
 
-# Daily morning ADHD task refresh
-0 7 * * * $HOME/biography/tasks/adhd-task-prioritizer.sh
+# Daily retrospective at 11:00 PM to capture the full day
+0 23 * * * $HOME/biography/reports/daily-retro.sh create
 
-# Daily summary generation (weekdays at 5:30 PM)
-30 17 * * 1-5 $HOME/biography/tasks/daily-summary-wrapper.sh
+# Weekly retrospective at 11:30 PM on Sundays (except 1st of month)
+30 23 * * 0 $HOME/biography/reports/weekly-retro.sh
 
-# Monthly comprehensive Covey analysis (1st of month at 6 PM)
-0 18 1 * * $HOME/biography/tasks/covey-analysis-simple.sh
+# Monthly planning at 12:00 AM on 1st of month
+0 0 1 * * $HOME/biography/reports/monthly-planning.sh
 
-# Weekly Covey progress review (Sundays at 6 PM, except 1st of month)  
-0 18 * * 0 $HOME/biography/tasks/covey-weekly-review.sh
+# Weekly planning at 12:30 AM on Sundays (except 1st of month)
+30 0 * * 0 $HOME/biography/reports/weekly-planning.sh
+
+# Daily planning at 1:00 AM to start new day with fresh priorities
+0 1 * * * $HOME/biography/reports/daily-planning.sh
+```
+
+**Logical Flow**: Retrospectives analyze completed periods first, then planning scripts use those insights to create forward-looking strategies.
+
+**Daily Schedule:**
+```
+11:00 PM → Daily retrospective (analyze today)
+ 1:00 AM → Daily planning (plan tomorrow)
+```
+
+**Weekly Schedule (Sundays):**
+```  
+11:00 PM → Daily retrospective
+11:30 PM → Weekly retrospective  
+12:30 AM → Weekly planning
+ 1:00 AM → Daily planning
+```
+
+**Monthly Schedule (1st of month):**
+```
+11:00 PM → Daily retrospective
+12:00 AM → Monthly planning (comprehensive)
+ 1:00 AM → Daily planning
 ```
 
 ## Getting Started (New User Guide)
@@ -215,14 +243,14 @@ If you prefer direct script interaction:
 echo "Question?" | ./utils/question-manager.sh ask # Piped input
 ./utils/question-manager.sh -rb7 generate --challenges 5  # Generate targeted questions
 
-# Run comprehensive Covey analysis
-./tasks/covey-analysis-simple.sh
-
-# Create ADHD-focused task list
-./tasks/adhd-task-prioritizer.sh
-
-# Generate daily summary
-./utils/daily-summary.py create
+# Automated reporting scripts (normally run by cron)
+./reports/monthly-planning.sh                    # Comprehensive monthly Covey analysis
+./reports/weekly-retro.sh                        # Weekly progress retrospective  
+./reports/weekly-planning.sh                     # Next week goal setting
+./reports/daily-retro.sh create                  # Daily retrospective (standard)
+./reports/daily-retro.sh --picard create         # Daily retrospective (Picard style)
+./reports/daily-retro.sh organize-topics         # Topic organization mode
+./reports/daily-planning.sh                      # Tomorrow's task prioritization
 
 # Topic management (Claude-powered)
 ./utils/topic-manager.sh route-question "Your question here"
@@ -366,20 +394,26 @@ All generated content goes to `$VAULT_DIR` as Obsidian-compatible markdown:
 ## Development
 
 ### Adding New Scripts
-1. Place in appropriate directory (`tasks/`, `utils/`)
-2. Add auto-config loading: `source "$(dirname "$0")/../utils/auto-config.sh"`
+1. Place in appropriate directory (`reports/`, `utils/`)
+2. Add auto-config and logger loading:
+   ```bash
+   source "$(dirname "$0")/../utils/auto-config.sh"
+   source "$(dirname "$0")/../utils/logger.sh"
+   ```
 3. Use environment variables for paths
-4. Make executable: `chmod +x script-name.sh`
+4. Use centralized logging functions: `log_start`, `log_info`, `log_warn`, `log_error`, `log_end`
+5. Make executable: `chmod +x script-name.sh`
 
 ### Configuration Management
 - All paths centralized in `utils/auto-config.sh`
-- Python scripts import from `utils/auto_config.py`
 - Override defaults with environment variables
 
 ### Logging
-- Centralized logging to `$LOGS_DIR/`
-- Structured format with timestamps
-- Separate logs for each component
+- **Centralized logging utility**: All scripts use `utils/logger.sh`
+- **Automatic log file naming**: Files named after calling script (e.g., `question-manager.log`)
+- **Structured format**: Timestamped entries with log levels
+- **Available functions**: `log_start`, `log_info`, `log_warn`, `log_error`, `log_end`
+- **Log location**: `$LOGS_DIR/[script-name].log`
 
 ## Architecture
 
@@ -402,6 +436,9 @@ The system follows a Claude-powered modular architecture:
 ### Key Design Principles
 - **Claude-First Design**: Claude Code is the primary interface - scripts are tools for Claude to use
 - **Intelligence over Hardcoding**: Claude handles complex decision-making and file editing
+- **Consolidated Architecture**: Unified systems replace multiple legacy components (question-manager replaces 3 scripts, daily-summary replaces 5 scripts)
+- **Pure Bash Implementation**: Zero Python dependencies for maximum portability and reliability
+- **Centralized Infrastructure**: Shared logging, configuration, and utilities across all components
 - **Essentialism**: Focus on vital few priorities rather than reactive urgency  
 - **Context Awareness**: All components share centralized context and configuration
 - **Obsidian Integration**: Rich cross-linking, tagging, and metadata management
@@ -462,16 +499,34 @@ The system follows a Claude-powered modular architecture:
 ./setup/verify-system.sh  # (if created)
 
 # Check all components
-ls -la $HOME/biography/tasks/*.sh
+ls -la $HOME/biography/reports/*.sh
 ls -la $HOME/Documents/Obsidian\ Vault/Topics/
+ls -la $HOME/Documents/Obsidian\ Vault/Archived/    # Archived daily retrospectives
 tail -f $HOME/biography/logs/*.log
 ```
 
 ### Support
 
-- Check logs in `logs/` directory for detailed error messages
-- Review auto-config.sh for path configurations
-- Test individual components manually before enabling automation
+**Debugging with Centralized Logs:**
+```bash
+# Check all recent activity
+tail -f $HOME/biography/logs/*.log
+
+# View specific component logs  
+cat $HOME/biography/logs/question-manager.log
+cat $HOME/biography/logs/daily-summary.log
+cat $HOME/biography/logs/adhd-task-prioritizer.log
+
+# Monitor real-time logging during script execution
+tail -f $HOME/biography/logs/[script-name].log
+```
+
+**Common Debug Steps:**
+- Check logs in `logs/` directory for detailed error messages with timestamps and levels
+- Review `utils/auto-config.sh` for path configurations and environment detection
+- Test individual components manually before enabling cron automation
+- Verify Claude CLI is working: `claude --version`
+- Check script permissions: `ls -la tasks/ utils/`
 
 ## Contributing
 
@@ -484,6 +539,23 @@ tail -f $HOME/biography/logs/*.log
 ## License
 
 This project is for personal development and biography collection. Customize paths and configuration for your environment.
+
+---
+
+## Recent System Improvements
+
+**🎯 Complete System Redesign (2025)**
+- **Intuitive Naming System**: All scripts now use descriptive names - `daily-retro.sh`, `daily-planning.sh`, `weekly-retro.sh`, `weekly-planning.sh`, `monthly-planning.sh`
+- **Two-Phase Analysis Cycle**: Retrospectives run first (11:00-11:30 PM), then planning uses those insights (12:00-1:00 AM)
+- **Unified Question Management**: Single `question-manager.sh` with Unix-style stackable flags replaces 3 legacy scripts
+- **Split Weekly Analysis**: Separate retrospective and planning scripts with 30-minute offset for optimal data flow
+- **Centralized Infrastructure**: Shared logging, configuration, and utilities across all components
+
+**⚡ Architecture & Performance**
+- **Pure Bash Implementation**: Zero Python dependencies for maximum portability and reliability
+- **Semantic Directory Structure**: Clear separation between automated `reports/` and interactive `utils/`
+- **Optimized Scheduling**: Logical flow prevents script conflicts and ensures fresh data for planning
+- **Smart Context Loading**: Intelligent defaults reduce unnecessary data loading and improve performance
 
 ---
 

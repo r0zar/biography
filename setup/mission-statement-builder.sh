@@ -4,22 +4,18 @@
 # Uses Claude to analyze existing Q&A responses and guide mission statement creation
 # Creates comprehensive Mission Statement.md based on user's biography data
 
-# Auto-load configuration
+# Auto-load configuration and logging
 source "$(dirname "$0")/../utils/auto-config.sh"
+source "$(dirname "$0")/../utils/logger.sh"
 
 # Set environment for proper operations
 export DISPLAY="${DISPLAY:-:1}"
 export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}"
 
-# Log function
-log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S'): $1" >> "$BIOGRAPHY_LOG"
-}
-
 echo "🎯 Mission Statement Builder"
 echo "Creating your personal mission statement based on your Q&A responses..."
 
-log "Starting mission statement creation process"
+log_start "Mission statement creation process"
 
 # Check if we have enough data
 if [[ ! -f "$BIOGRAPHY_FILE" ]] && [[ ! -d "$TOPICS_DIR" ]]; then
@@ -77,10 +73,10 @@ IMPORTANT: Make this conversational and interactive. Don't just generate a missi
 
 Begin by analyzing all available Q&A data and presenting your findings."
 
-log "Analyzing biography data for mission statement creation"
+log_info "Analyzing biography data for mission statement creation"
 "$SCRIPTS_DIR/utils/claude-wrapper.sh" "$MISSION_STATEMENT_PROMPT"
 
-log "Mission statement creation completed"
+log_end "Mission statement creation"
 
 echo ""
 echo "✅ Mission Statement created!"

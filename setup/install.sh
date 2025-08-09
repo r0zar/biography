@@ -32,13 +32,6 @@ prompt_user() {
 echo ""
 echo "🔧 Checking Prerequisites..."
 
-# Check Python
-if ! command_exists python3; then
-    echo "❌ Python 3 not found. Please install Python 3.6+ first."
-    exit 1
-fi
-echo "✅ Python 3 found"
-
 # Check Claude CLI
 if ! command_exists claude; then
     echo "❌ Claude CLI not found."
@@ -111,7 +104,7 @@ fi
 
 # Create Priority Management template in vault if it doesn't exist
 if [[ ! -f "$VAULT_DIR/Priority-Management.md" ]]; then
-    cp "$PROJECT_DIR/templates/Priority-Management.md" "$VAULT_DIR/Priority-Management.md"
+    cp "$PROJECT_DIR/prompts/Priority-Management.md" "$VAULT_DIR/Priority-Management.md"
     echo "✅ Created Priority Management template"
 fi
 
@@ -144,7 +137,7 @@ echo ""
 echo "📚 Documentation:"
 echo "• README.md - Complete documentation"  
 echo "• Topic management: ./utils/topic-manager.sh --help"
-echo "• Manual question generation: ./tasks/biography-questions.sh"
+echo "• Question management: ./utils/question-manager.sh --help"
 
 echo ""
 if prompt_user "Would you like to run the bootstrap questions now?"; then
